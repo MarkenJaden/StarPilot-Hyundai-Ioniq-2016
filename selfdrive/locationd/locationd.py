@@ -26,7 +26,7 @@ MAX_SENSOR_TIME_DIFF = 0.1  # s
 YAWRATE_CROSS_ERR_CHECK_FACTOR = 30
 LOW_SPEED_GYRO_CAMODO_VEGO = 5.0  # m/s
 LOW_SPEED_CAMODO_YAWRATE_STD_FLOOR = 0.02  # rad/s
-INPUT_INVALID_LIMIT = 2.0 # 1 (camodo) / 9 (sensor) bad input[s] ignored
+INPUT_INVALID_LIMIT = 4.0 # bad input[s] ignored before marking invalid (increased for Comma 3X/4 stability)
 INPUT_INVALID_RECOVERY = 10.0 # ~10 secs to resume after exceeding allowed bad inputs by one
 POSENET_STD_INITIAL_VALUE = 10.0
 POSENET_STD_HIST_HALF = 20
@@ -265,7 +265,7 @@ def sensor_all_checks(acc_msgs, gyro_msgs, sensor_valid, sensor_recv_time, senso
 
 
 def main():
-  config_realtime_process([0, 1, 2, 3], 5)
+  config_realtime_process([0, 1, 2, 3], 25)
 
   DEBUG = bool(int(os.getenv("DEBUG", "0")))
   SIMULATION = bool(int(os.getenv("SIMULATION", "0")))

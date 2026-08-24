@@ -174,18 +174,18 @@ procs = [
 
 # StarPilot variables
 procs += [
-  PythonProcess("the_galaxy", "starpilot.system.the_galaxy.the_galaxy", always_run, nice=10),
-  PythonProcess("galaxy", "starpilot.system.galaxy.galaxy", always_run, nice=10),
+  PythonProcess("the_galaxy", "starpilot.system.the_galaxy.the_galaxy", always_run, nice=15),
+  PythonProcess("galaxy", "starpilot.system.galaxy.galaxy", always_run, nice=15),
 ]
 
 device_type = HARDWARE.get_device_type()
-if device_type in ("tici", "tizi"):
+if device_type in ("tici", "tizi", "mici"):
   procs.append(big_device_ui_process())
 else:
   procs.append(PythonProcess("ui", "selfdrive.ui.ui", always_run, watchdog_max_dt=UI_WATCHDOG_MAX_DT))
 
 procs += [
-  PythonProcess("device_syncd", "starpilot.system.device_syncd", always_run),
+  PythonProcess("device_syncd", "starpilot.system.device_syncd", always_run, nice=19),
   PythonProcess("starpilot_process", "starpilot.starpilot_process", always_run),
   PythonProcess("mapd", "starpilot.navigation.mapd_wrapper", always_run, nice=19),
   PythonProcess("navigationd", "starpilot.navigation.navigationd", run_navigationd, nice=19),

@@ -629,10 +629,17 @@ class Controls:
             held_mag = min(lead_curvature * blinker_dir, abs(self.turn_hold_curvature) + CURVATURE_HOLD_RATCHET_RATE * DT_CTRL)
             self.turn_hold_curvature = math.copysign(held_mag, lead_curvature)
 
+    corridor_offset = 0.0
+    try:
+      from openpilot.starpilot.controls.lib.emergency_corridor import get_emergency_corridor_helper
+      corridor_offset = get_emergency_corridor_helper().update(model_v2, CS.vEgo, CC.latActive)
+    except Exception:
+      pass
+
     new_desired_curvature = self.lane_centering.update(
       new_desired_curvature, model_v2, CS.vEgo,
       self.starpilot_toggles.lane_centering,
-      self.starpilot_toggles.lane_center_offset,
+      self.starpilot_toggles.lane_center_offset + corridor_offset,
       self.starpilot_toggles.lane_centering_e2e_authority,
       CC.latActive,
       bool(self.sm.all_checks(['modelV2'])),

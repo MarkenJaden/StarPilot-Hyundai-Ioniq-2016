@@ -1773,7 +1773,7 @@ def _fuel_tracker_worker():
   try:
     from openpilot.starpilot.controls.lib.fuel_tracker import get_fuel_tracker
     tracker = get_fuel_tracker()
-    sm = messaging.SubMaster(["carState", "controlsState"], poll="carState")
+    sm = messaging.SubMaster(["carState", "controlsState", "radarState"], poll="carState")
   except Exception:
     with _fuel_tracker_lock:
       _fuel_tracker_worker_thread = None
@@ -1796,6 +1796,19 @@ def _fuel_tracker_worker():
       regen_active = bool(getattr(cs, "brakeLights", False) and v_ego > 2.0 and gas_pos <= 0.0)
       is_onroad = bool(params.get_bool("IsOnroad"))
       fuel_level = float(getattr(cs, "fuelLevel", 0.0)) if hasattr(cs, "fuelLevel") else None
+
+      # Lead radar telemetry
+      lead_d_rel = None
+      lead_v_rel = None
+      lead_status = False
+      if "radarState" in sm.updated and sm.valid["radarState"]:
+        radar = sm["radarState"]
+        if hasattr(radar, "leadOne") and bool(getattr(radar.leadOne, "status", False)):
+          lead = radar.leadOne
+          lead_d_rel = float(getattr(lead, "dRel", 0.0))
+          lead_v_rel = float(getattr(lead, "vRel", 0.0))
+          lead_status = True
+
       tracker.update(
         v_ego_mps=v_ego,
         engine_rpm=engine_rpm,
@@ -1804,6 +1817,9 @@ def _fuel_tracker_worker():
         regen_active=regen_active,
         is_onroad=is_onroad,
         fuel_level_segments=fuel_level,
+        lead_d_rel=lead_d_rel,
+        lead_v_rel=lead_v_rel,
+        lead_status=lead_status,
       )
     except Exception:
       pass

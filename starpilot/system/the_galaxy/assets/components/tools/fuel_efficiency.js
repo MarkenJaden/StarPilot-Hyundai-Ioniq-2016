@@ -10,6 +10,7 @@ const state = reactive({
   tankData: null,
   customTrips: [],
   error: "",
+  showRadarSpeed: localStorage.getItem("galaxy_show_radar_speed") === "true",
   showRefuelModal: false,
   showNewTripModal: false,
   refuelForm: {
@@ -266,7 +267,11 @@ export function FuelEfficiency() {
           <i class="bi bi-fuel-pump"></i>
           Hyundai Ioniq Hybrid — Verbrauchs- & Phasenanalyse
         </h2>
-        <div class="fuel-actions">
+        <div class="fuel-actions" style="display: flex; gap: 0.75rem; align-items: center;">
+          <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem; color: #38bdf8; font-weight: 600;">
+            <input type="checkbox" checked="${() => state.showRadarSpeed}" @change="${(e) => { state.showRadarSpeed = e.target.checked; localStorage.setItem('galaxy_show_radar_speed', String(e.target.checked)); }}" />
+            <span>🎯 Vordermann Radar</span>
+          </label>
           <button class="fuel-btn primary" @click="${triggerDriveReset}">
             <i class="bi bi-flag-fill"></i>
             Fahrt abschließen
@@ -292,6 +297,45 @@ export function FuelEfficiency() {
 
       <!-- TAB 1: LIVE MONITOR -->
       ${() => state.activeTab === 'live' ? html`
+        ${() => state.showRadarSpeed ? html`
+          <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div style="font-size: 2rem; background: rgba(56, 189, 248, 0.15); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(56, 189, 248, 0.4);">
+                🎯
+              </div>
+              <div>
+                <div style="font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; color: #38bdf8; text-transform: uppercase;">
+                  Radar Vordermann-Tracking
+                </div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #ffffff; display: flex; align-items: baseline; gap: 0.4rem;">
+                  <span>${() => state.live?.leadCarSpeedKph !== null && state.live?.leadCarSpeedKph !== undefined ? state.live.leadCarSpeedKph : '--'}</span>
+                  <span style="font-size: 0.85rem; font-weight: 600; color: #94a3b8;">km/h</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 1.5rem; text-align: right;">
+              <div>
+                <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">Abstand</div>
+                <div style="font-size: 1.15rem; font-weight: 700; color: #4ade80;">
+                  ${() => state.live?.leadCarDistanceM !== null && state.live?.leadCarDistanceM !== undefined ? state.live.leadCarDistanceM + ' m' : '--'}
+                </div>
+              </div>
+              <div>
+                <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">Differenz (&Delta;v)</div>
+                <div style="font-size: 1.15rem; font-weight: 700; color: ${() => (state.live?.leadCarRelSpeedKph || 0) < 0 ? '#ef4444' : '#38bdf8'};">
+                  ${() => state.live?.leadCarRelSpeedKph !== null && state.live?.leadCarRelSpeedKph !== undefined ? (state.live.leadCarRelSpeedKph > 0 ? '+' : '') + state.live.leadCarRelSpeedKph + ' km/h' : '--'}
+                </div>
+              </div>
+              <div>
+                <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">Radar-Lock</div>
+                <div style="font-size: 0.85rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; background: ${() => state.live?.leadCarStatus ? 'rgba(34, 197, 94, 0.2)' : 'rgba(148, 163, 184, 0.2)'}; color: ${() => state.live?.leadCarStatus ? '#22c55e' : '#94a3b8'};">
+                  ${() => state.live?.leadCarStatus ? 'LOCK' : 'SEARCH'}
+                </div>
+              </div>
+            </div>
+          </div>
+        ` : ''}
         <div class="current-phase-card" style="border-color: ${() => phaseInfo.color}">
           <div class="phase-info">
             <div class="phase-icon" style="background: ${() => phaseInfo.color}22">

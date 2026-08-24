@@ -82,6 +82,11 @@ class FuelEfficiencyTracker:
       phase: PhaseMetrics() for phase in DrivingPhase
     }
 
+    self.lead_status = False
+    self.lead_d_rel = None
+    self.lead_v_rel = None
+    self.lead_v_kph = None
+
   # --- Tank-to-Tank Cycle Management ---
 
   def _load_tanks(self):
@@ -260,12 +265,23 @@ class FuelEfficiencyTracker:
 
     return DrivingPhase.ICE_CRUISE
 
-  def update(self, v_ego_mps: float, engine_rpm: float | None = None, gas_pos_pct: float = 0.0, brake_pressed: bool = False, regen_active: bool = False, engine_torque_pct: float = 0.0, fuel_cut: bool = False, is_onroad: bool = True, fuel_level_segments: float | None = None, refuel_det_mode: bool = False, dte_km: float | None = None):
+  def update(self, v_ego_mps: float, engine_rpm: float | None = None, gas_pos_pct: float = 0.0, brake_pressed: bool = False, regen_active: bool = False, engine_torque_pct: float = 0.0, fuel_cut: bool = False, is_onroad: bool = True, fuel_level_segments: float | None = None, refuel_det_mode: bool = False, dte_km: float | None = None, lead_d_rel: float | None = None, lead_v_rel: float | None = None, lead_status: bool = False):
     now = time.monotonic()
     dt = min(max(now - self.last_step_time, 0.001), 1.0)
     self.last_step_time = now
 
     speed_kph = max(0.0, v_ego_mps * 3.6)
+
+    # Lead Car Radar Speed Tracking
+    self.lead_status = bool(lead_status)
+    if lead_status and lead_d_rel is not None and lead_d_rel > 0:
+      self.lead_d_rel = round(lead_d_rel, 1)
+      self.lead_v_rel = round(lead_v_rel * 3.6, 1) if lead_v_rel is not None else 0.0
+      self.lead_v_kph = max(0.0, round(speed_kph + self.lead_v_rel, 1))
+    else:
+      self.lead_d_rel = None
+      self.lead_v_rel = None
+      self.lead_v_kph = None
     rpm = max(0.0, engine_rpm if engine_rpm is not None else (0.0 if not gas_pos_pct and speed_kph < 30 else 1200.0))
     engine_load = max(0.0, min(100.0, max(gas_pos_pct, engine_torque_pct)))
     is_engine_running = rpm > 450.0
@@ -432,6 +448,10 @@ class FuelEfficiencyTracker:
       "tripRegenKWh": round(self.total_regen_wh / 1000.0, 3),
       "evDistancePct": round(ev_dist_pct, 1),
       "evTimePct": round(ev_time_pct, 1),
+      "leadCarStatus": self.lead_status,
+      "leadCarDistanceM": self.lead_d_rel,
+      "leadCarRelSpeedKph": self.lead_v_rel,
+      "leadCarSpeedKph": self.lead_v_kph,
     }
 
   def get_trip_statistics(self) -> dict:

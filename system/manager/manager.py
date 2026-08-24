@@ -973,6 +973,13 @@ def cleanup_inaccessible_msgq_files(shm_path: str | Path) -> int:
 
 
 def manager_init() -> None:
+  # Fast boot optimizations: Persistent GPU JIT shader cache & bytecode cache
+  os.environ.setdefault("PYTHONPYCACHEPREFIX", "/data/pycache")
+  os.environ.setdefault("CACHEDB", "/data/tinygrad_cache/cache.db")
+  os.environ.setdefault("CACHELEVEL", "2")
+  os.environ.setdefault("CCACHE", "1")
+  os.environ.setdefault("SCACHE", "1")
+
   manager_init_start = time.monotonic()
   last_timing = _log_boot_timing("manager_init", "start", manager_init_start, manager_init_start)
 
@@ -1026,7 +1033,7 @@ def manager_init() -> None:
   migrate_traffic_follow_default(params, params_cache)
   last_timing = _log_boot_timing("manager_init", "starpilot_migrations", manager_init_start, last_timing)
 
-  # set unset params to their default value
+  # set unset params to their default value with fast-path I/O check
   for k in params.all_keys():
     current_value = params.get(k)
     if current_value is None:
@@ -1034,7 +1041,8 @@ def manager_init() -> None:
       if cached_value is not None:
         params.put(k, cached_value)
     else:
-      params_cache.put(k, current_value)
+      if params_cache.get(k) != current_value:
+        params_cache.put(k, current_value)
   last_timing = _log_boot_timing("manager_init", "params_defaults_cache_sync", manager_init_start, last_timing)
 
   # Create folders needed for msgq

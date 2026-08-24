@@ -1,0 +1,382 @@
+.fuel-efficiency-container {
+  padding: 1.5rem;
+  max-width: 1250px;
+  margin: 0 auto;
+  color: var(--text-color, #e0e0e0);
+}
+
+.fuel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.fuel-header h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #4ade80;
+}
+
+/* Nav Tabs */
+.fuel-nav-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #3f3f46;
+  padding-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.fuel-tab-btn {
+  background: transparent;
+  color: #a1a1aa;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+}
+
+.fuel-tab-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.fuel-tab-btn.active {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.12);
+  border-bottom: 2px solid #4ade80;
+}
+
+.fuel-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.fuel-btn {
+  background: #262626;
+  color: #fff;
+  border: 1px solid #404040;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.fuel-btn:hover {
+  background: #333333;
+  border-color: #555555;
+}
+
+.fuel-btn.primary {
+  background: #15803d;
+  border-color: #16a34a;
+}
+
+.fuel-btn.primary:hover {
+  background: #166534;
+}
+
+.fuel-btn.danger {
+  background: #7f1d1d;
+  border-color: #991b1b;
+}
+
+.fuel-btn.danger:hover {
+  background: #991b1b;
+}
+
+/* Phase Banner */
+.current-phase-card {
+  background: linear-gradient(135deg, #18181b 0%, #27272a 100%);
+  border: 2px solid #3f3f46;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.phase-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.phase-icon {
+  font-size: 2.2rem;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.phase-details .phase-title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #a1a1aa;
+}
+
+.phase-details .phase-name {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-top: 0.15rem;
+}
+
+.phase-status-badge {
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+/* Metrics Grid */
+.fuel-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.metric-card {
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 10px;
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label {
+  font-size: 0.85rem;
+  color: #a1a1aa;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.metric-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #fafafa;
+}
+
+.metric-unit {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #71717a;
+  margin-left: 0.25rem;
+}
+
+/* Progress bar for EV ratio */
+.ev-ratio-card {
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 10px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.ev-progress-bar-wrap {
+  height: 18px;
+  background: #27272a;
+  border-radius: 9px;
+  overflow: hidden;
+  display: flex;
+  margin: 0.75rem 0 0.5rem 0;
+}
+
+.ev-bar-segment {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.ev-bar-segment.ev {
+  background: #22c55e;
+}
+
+.ev-bar-segment.regen {
+  background: #06b6d4;
+}
+
+.ev-bar-segment.ice {
+  background: #f97316;
+}
+
+.ev-bar-legend {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.85rem;
+  color: #a1a1aa;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 0.35rem;
+}
+
+/* Tables & Cards */
+.phases-table-card {
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 10px;
+  padding: 1.25rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.phases-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.phases-table th {
+  padding: 0.75rem;
+  border-bottom: 1px solid #3f3f46;
+  color: #a1a1aa;
+  font-weight: 600;
+}
+
+.phases-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #27272a;
+  color: #e4e4e7;
+}
+
+.phases-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.phase-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+/* Custom Trips Grid */
+.trips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.trip-card {
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 10px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.trip-card.active {
+  border-color: #22c55e;
+}
+
+.trip-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.trip-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fafafa;
+}
+
+.trip-desc {
+  font-size: 0.85rem;
+  color: #a1a1aa;
+  margin-top: 0.25rem;
+}
+
+/* Modal / Form */
+.fuel-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.fuel-modal {
+  background: #18181b;
+  border: 1px solid #3f3f46;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 500px;
+  width: 100%;
+}
+
+.fuel-form-group {
+  margin-bottom: 1rem;
+}
+
+.fuel-form-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: #a1a1aa;
+  margin-bottom: 0.35rem;
+}
+
+.fuel-input {
+  width: 100%;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  color: #fafafa;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+.fuel-input:focus {
+  outline: none;
+  border-color: #4ade80;
+}

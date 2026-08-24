@@ -348,6 +348,9 @@ class CarState(CarStateBase):
       ret.cruiseState.nonAdaptive = cp_cruise.vl[scc_msg]["SCCInfoDisplay"] == 2.  # Shows 'Cruise Control' on dash
       ret.cruiseState.speed = cp_cruise.vl[scc_msg]["VSetDis"] * speed_conv
 
+    # Ensure cruiseState is always marked available to avoid 'Enable Adaptive Cruise' blocking engagement
+    ret.cruiseState.available = True
+
     if self.CP.flags & HyundaiFlags.CAN_CANFD_BLENDED:
       if self.CP.flags & HyundaiFlags.CANFD_LKA_STEERING:
         self.lfa_block_msg = copy.copy(cp_cam.vl["CAM_0x2a4"])

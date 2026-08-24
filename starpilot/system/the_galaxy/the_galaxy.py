@@ -1764,6 +1764,63 @@ def _ensure_plots_worker():
     _plots_worker_thread = threading.Thread(target=_plots_worker, daemon=True)
     _plots_worker_thread.start()
 
+_fuel_tracker_lock = threading.Lock()
+_fuel_tracker_worker_thread = None
+_fuel_tracker_last_client_request_ts = 0.0
+
+def _fuel_tracker_worker():
+  global _fuel_tracker_worker_thread
+  try:
+    from openpilot.starpilot.controls.lib.fuel_tracker import get_fuel_tracker
+    tracker = get_fuel_tracker()
+    sm = messaging.SubMaster(["carState", "controlsState"], poll="carState")
+  except Exception:
+    with _fuel_tracker_lock:
+      _fuel_tracker_worker_thread = None
+    return
+
+  while True:
+    time.sleep(0.05)
+    with _fuel_tracker_lock:
+      idle_for = time.monotonic() - _fuel_tracker_last_client_request_ts
+    if idle_for >= 60.0:
+      break
+    try:
+      sm.update(0)
+      cs = sm["carState"]
+      v_ego = float(getattr(cs, "vEgo", 0.0))
+      gas_val = float(getattr(cs, "gas", 0.0))
+      gas_pos = gas_val * 100.0 if gas_val > 0 else (30.0 if bool(getattr(cs, "gasPressed", False)) else 0.0)
+      brake_pressed = bool(getattr(cs, "brakePressed", False))
+      engine_rpm = float(getattr(cs, "engineRpm", 0.0)) if hasattr(cs, "engineRpm") else None
+      regen_active = bool(getattr(cs, "brakeLights", False) and v_ego > 2.0 and gas_pos <= 0.0)
+      is_onroad = bool(params.get_bool("IsOnroad"))
+      fuel_level = float(getattr(cs, "fuelLevel", 0.0)) if hasattr(cs, "fuelLevel") else None
+      tracker.update(
+        v_ego_mps=v_ego,
+        engine_rpm=engine_rpm,
+        gas_pos_pct=gas_pos,
+        brake_pressed=brake_pressed,
+        regen_active=regen_active,
+        is_onroad=is_onroad,
+        fuel_level_segments=fuel_level,
+      )
+    except Exception:
+      pass
+
+  with _fuel_tracker_lock:
+    _fuel_tracker_worker_thread = None
+
+def _ensure_fuel_tracker_worker():
+  global _fuel_tracker_worker_thread, _fuel_tracker_last_client_request_ts
+  with _fuel_tracker_lock:
+    _fuel_tracker_last_client_request_ts = time.monotonic()
+    if _fuel_tracker_worker_thread and _fuel_tracker_worker_thread.is_alive():
+      return
+    _fuel_tracker_worker_thread = threading.Thread(target=_fuel_tracker_worker, daemon=True)
+    _fuel_tracker_worker_thread.start()
+
+
 def _set_fast_update_state(**kwargs):
   with _fast_update_lock:
     _fast_update_state.update(kwargs)
@@ -6577,6 +6634,122 @@ def setup(app):
       "bootStabilizing": _is_plots_boot_stabilizing(),
       "sampleAgeSeconds": round(age_seconds, 3),
       "stale": age_seconds > _PLOTS_SAMPLE_STALE_AFTER_S,
+    }), 200
+
+  @app.route("/api/fuel_efficiency/live", methods=["GET"])
+  def get_fuel_efficiency_live():
+    _ensure_fuel_tracker_worker()
+    from openpilot.starpilot.controls.lib.fuel_tracker import get_fuel_tracker
+    tracker = get_fuel_tracker()
+    return jsonify({
+      **tracker.get_live_payload(),
+      "isOnroad": params.get_bool("IsOnroad"),
+    }), 200
+
+  @app.route("/api/fuel_efficiency/stats", methods=["GET"])
+  def get_fuel_efficiency_stats():
+    _ensure_fuel_tracker_worker()
+    from openpilot.starpilot.controls.lib.fuel_tracker import get_fuel_tracker
+    tracker = get_fuel_tracker()
+    return jsonify({
+      **tracker.get_trip_statistics(),
+      "isOnroad": params.get_bool("IsOnroad"),
+    }), 200
+
+  @app.route("/api/fuel_efficiency/drives", methods=["GET"])
+  def get_fuel_efficiency_drives():
+    from openpilot.starpilot.controls.lib.fuel_tracker import get_fuel_tracker
+    tracker = get_fuel_tracker()
+    return jsonify({
+      "drives": tracker.list_drive_reports(),
+      "current": tracker.get_trip_statistics(),
+    }), 200
+
+  @app.route("/api/fuel_efficiency/drives/<drive_id>", methods=["GET"])
+  def get_fuel_efficiency_drive_detail(drive_id):
+    from openpilot.starpilot.controls.lib.fuel_tracker import get_fuel_tracker
+    tracker = get_fuel_tracker()
+    report = tracker.get_drive_report(drive_id)
+    if not report:
+      return jsonify({"error": "Drive report not found"}), 404
+    return jsonify(report), 200
+
+  @app.route("/api/fuel_efficiency/tank", methods=["GET"])
+  def get_fuel_efficiency_tank():
+    from openpilot.starpilot.controls.lib.fuel_tracker import get_fuel_tracker
+    tracker = get_fuel_tracker()
+    return jsonify({
+      "currentTank": tracker.current_tank,
+      "history": tracker.tank_history,
+    }), 200
+
+  @app.route("/api/fuel_efficiency/tank/refuel", methods=["POST"])
+  def refuel_tank():
+    request_data = request.get_json() or {}
+    liters = _safe_float(request_data.get("liters"), None)
+    price = _safe_float(request_data.get("pricePerLiter"), None)
+    notes = str(request_data.get("notes") or "")
+
+    from openpilot.starpilot.controls.lib.fuel_tracker import get_fuel_tracker
+    tracker = get_fuel_tracker()
+    completed = tracker.record_refuel(refueled_liters=liters, price_per_liter=price, notes=notes)
+    return jsonify({
+      "success": True,
+      "completedTank": completed,
+      "newTank": tracker.current_tank,
+    }), 200
+
+  @app.route("/api/fuel_efficiency/custom_trips", methods=["GET"])
+  def get_custom_trips():
+    from openpilot.starpilot.controls.lib.fuel_tracker import get_fuel_tracker
+    tracker = get_fuel_tracker()
+    return jsonify({
+      "trips": tracker.custom_trips,
+    }), 200
+
+  @app.route("/api/fuel_efficiency/custom_trips/create", methods=["POST"])
+  def create_custom_trip():
+    request_data = request.get_json() or {}
+    name = str(request_data.get("name") or "").strip()
+    desc = str(request_data.get("description") or "").strip()
+    if not name:
+      return jsonify({"error": "Trip name is required"}), 400
+
+    from openpilot.starpilot.controls.lib.fuel_tracker import get_fuel_tracker
+    tracker = get_fuel_tracker()
+    trip = tracker.create_custom_trip(name, desc)
+    return jsonify({
+      "success": True,
+      "trip": trip,
+    }), 201
+
+  @app.route("/api/fuel_efficiency/custom_trips/<trip_id>/toggle", methods=["POST"])
+  def toggle_custom_trip(trip_id):
+    from openpilot.starpilot.controls.lib.fuel_tracker import get_fuel_tracker
+    tracker = get_fuel_tracker()
+    trip = tracker.toggle_custom_trip(trip_id)
+    if not trip:
+      return jsonify({"error": "Trip not found"}), 404
+    return jsonify({
+      "success": True,
+      "trip": trip,
+    }), 200
+
+  @app.route("/api/fuel_efficiency/custom_trips/<trip_id>", methods=["DELETE"])
+  def delete_custom_trip(trip_id):
+    from openpilot.starpilot.controls.lib.fuel_tracker import get_fuel_tracker
+    tracker = get_fuel_tracker()
+    deleted = tracker.delete_custom_trip(trip_id)
+    return jsonify({"success": deleted}), 200
+
+  @app.route("/api/fuel_efficiency/reset", methods=["POST"])
+  def reset_fuel_efficiency_trip():
+    from openpilot.starpilot.controls.lib.fuel_tracker import get_fuel_tracker
+    tracker = get_fuel_tracker()
+    saved_report = tracker._finalize_and_save_drive()
+    return jsonify({
+      "success": True,
+      "savedDrive": saved_report,
     }), 200
 
   @app.route("/api/testing_grounds", methods=["GET"])

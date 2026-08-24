@@ -31,6 +31,7 @@ const MENU_ITEMS = {
     { name: "Backup and Restore", link: "/manage_toggles", icon: "bi-arrow-repeat" },
     { name: "Software", link: "/manage_updates", icon: "bi-arrow-up-circle" },
     { name: "Vehicle Features", link: "/vehicle_features", icon: "bi-car-front" },
+    { name: "Fuel & Hybrid Analytics", link: "/fuel_efficiency", icon: "bi-fuel-pump" },
   ],
 };
 

@@ -6768,6 +6768,27 @@ def setup(app):
       "savedDrive": saved_report,
     }), 200
 
+  @app.route("/api/dtc/scan", methods=["GET"])
+  def scan_dtcs():
+    from openpilot.starpilot.system.dtc_scanner import get_dtc_scanner
+    scanner = get_dtc_scanner()
+    results = scanner.scan()
+    return jsonify(results), 200
+
+  @app.route("/api/dtc/clear", methods=["POST"])
+  def clear_dtcs():
+    from openpilot.starpilot.system.dtc_scanner import get_dtc_scanner
+    scanner = get_dtc_scanner()
+    res = scanner.clear_dtcs()
+    return jsonify(res), 200
+
+  @app.route("/api/dtc/lookup/<path:code>", methods=["GET"])
+  def lookup_dtc(code):
+    from openpilot.starpilot.system.dtc_scanner import get_dtc_scanner
+    scanner = get_dtc_scanner()
+    res = scanner.lookup_code(code)
+    return jsonify(res), 200
+
   @app.route("/api/testing_grounds", methods=["GET"])
   def get_testing_grounds():
     state = _get_testing_grounds_state()

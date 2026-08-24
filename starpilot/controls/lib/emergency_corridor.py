@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import time
 import numpy as np
 
 from openpilot.common.filter_simple import FirstOrderFilter
@@ -10,17 +9,17 @@ from openpilot.common.realtime import DT_CTRL
 class EmergencyCorridorHelper:
   """
   Intelligent Highway & Emergency Corridor (Rettungsgasse) Lane Position Bias.
-  - Automatically identifies whether the vehicle is on the leftmost or rightmost highway lane using modelV2 laneLineProbs & roadEdges.
+  - STRICTLY LIMITED TO MULTI-LANE AUTOBAHN / MOTORWAYS.
+  - Will NEVER activate on country roads (Landstraßen), single-lane roads, or urban streets.
   - Leftmost lane: smooth bias to the left (-0.25m).
   - Rightmost / middle lanes: smooth bias to the right (+0.25m).
-  - Keeps safety margins to lane markings and smoothly blends offset.
+  - Smooth first-order transition without abrupt steering motion.
   """
 
   def __init__(self):
     self.params = Params()
     self.enabled = True
     self.base_offset = 0.25  # meters
-    self.min_highway_speed_kph = 40.0
     self.jam_speed_kph = 30.0
 
     self._offset_filter = FirstOrderFilter(0.0, 2.5, DT_CTRL)  # 2.5s smoothing tau
@@ -36,17 +35,50 @@ class EmergencyCorridorHelper:
     except Exception:
       pass
 
+  def is_autobahn_carriageway(self, model_v2) -> bool:
+    """
+    Reliably verifies that the current road is a genuine multi-lane Autobahn/motorway.
+    - Single carriageways (Landstraßen / Bundesstraßen ohne bauliche Trennung) have NO
+      adjacent lanes in the same direction and will return False.
+    - Requires at least 2 lanes in the same traveling direction.
+    """
+    try:
+      probs = np.asarray(model_v2.laneLineProbs, dtype=float)
+      if probs.size < 4:
+        return False
+
+      left_has_adjacent = bool(probs[0] > 0.35)
+      right_has_adjacent = bool(probs[3] > 0.35)
+
+      # On country roads (Landstraßen), there is only 1 lane in traveling direction.
+      # Both left and right adjacent lane probabilities are low -> strictly disable!
+      if not left_has_adjacent and not right_has_adjacent:
+        return False
+
+      # Check lane width (Autobahn lanes are wide: >= 3.0m)
+      lane_lines = getattr(model_v2, "laneLines", None)
+      if lane_lines and len(lane_lines) >= 3:
+        left_y = np.asarray(lane_lines[1].y, dtype=float)
+        right_y = np.asarray(lane_lines[2].y, dtype=float)
+        if len(left_y) > 0 and len(right_y) > 0:
+          width = float(right_y[0] - left_y[0])
+          if width < 2.9:  # Narrow country road or urban lane
+            return False
+
+      return True
+    except Exception:
+      return False
+
   def detect_lane_position(self, model_v2) -> str:
     """
     Classifies lane position from vision model probabilities.
     Returns: 'LEFTMOST', 'RIGHTMOST', 'MIDDLE', or 'UNKNOWN'
     """
     try:
-      probs = np.asarray(model_v2.laneLineProbs, dtype=float)
-      if probs.size < 4:
+      if not self.is_autobahn_carriageway(model_v2):
         return "UNKNOWN"
 
-      # laneLineProbs: [0: far-left, 1: left, 2: right, 3: far-right]
+      probs = np.asarray(model_v2.laneLineProbs, dtype=float)
       left_has_adjacent = probs[0] > 0.35
       right_has_adjacent = probs[3] > 0.35
 
@@ -57,8 +89,8 @@ class EmergencyCorridorHelper:
       if road_edges and len(road_edges) >= 2:
         left_edge_y = float(road_edges[0].y[0]) if len(road_edges[0].y) > 0 else -10.0
         right_edge_y = float(road_edges[1].y[0]) if len(road_edges[1].y) > 0 else 10.0
-        has_left_edge = abs(left_edge_y) < 3.5
-        has_right_edge = abs(right_edge_y) < 3.5
+        has_left_edge = abs(left_edge_y) < 3.8
+        has_right_edge = abs(right_edge_y) < 3.8
 
       if not left_has_adjacent and (right_has_adjacent or has_left_edge):
         return "LEFTMOST"
@@ -86,7 +118,7 @@ class EmergencyCorridorHelper:
 
     target_offset = 0.0
 
-    # Apply offset on highway speeds or during traffic jams (<30 km/h)
+    # ONLY apply offset when definitively confirmed on a multi-lane Autobahn
     if lane_pos == "LEFTMOST":
       # Drive slightly further to the left to open corridor on the right
       target_offset = -self.base_offset
@@ -94,10 +126,11 @@ class EmergencyCorridorHelper:
       # Drive slightly further to the right to open corridor on the left
       target_offset = +self.base_offset
     else:
+      # Country road (Landstraße), urban, or unknown -> Stay perfectly centered
       target_offset = 0.0
 
-    # In low-speed traffic jam, intensify emergency corridor
-    if speed_kph < self.jam_speed_kph and speed_kph > 2.0:
+    # In low-speed highway traffic jams, intensify emergency corridor
+    if target_offset != 0.0 and speed_kph < self.jam_speed_kph and speed_kph > 2.0:
       target_offset *= 1.2
 
     self.active_offset = float(self._offset_filter.update(target_offset))

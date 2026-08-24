@@ -381,9 +381,31 @@ def update_json_file(path, data):
 
 
 @cache
+def use_drive_server():
+  params = Params()
+  return params.get_bool("UseDriveServer") or params.get("ConnectServer", encoding="utf-8") == "drive"
+
+
+@cache
 def use_konik_server():
   # Prefer the persistent toggle over volatile cache files.
-  return Params().get_bool("UseKonikServer")
+  params = Params()
+  return params.get_bool("UseKonikServer") or params.get("ConnectServer", encoding="utf-8") == "konik"
+
+
+def get_active_api_host():
+  env = os.getenv("API_HOST")
+  if env:
+    return env.rstrip("/")
+  custom = Params().get("CustomApiHost", encoding="utf-8")
+  if custom:
+    return custom.rstrip("/")
+  if use_drive_server():
+    return "https://drive.markenjaden.de"
+  if use_konik_server():
+    return "https://api.konik.ai"
+  return "https://api.commadotai.com"
+
 
 
 def wait_for_no_driver(params, sm, door_checks=False, time_threshold=60):

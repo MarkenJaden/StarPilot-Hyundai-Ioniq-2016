@@ -4,41 +4,41 @@
 [![Custom Cloud](https://img.shields.io/badge/Drive-drive.markenjaden.de-38bdf8?logo=cloud)](https://drive.markenjaden.de)
 
 > [!WARNING]
-> ### ⚠️ Wichtiger Hinweis / Disclaimer
-> Dies ist ein **primär persönlicher Fork** von StarPilot, der speziell auf meinen **Hyundai Ioniq Hybrid (2016)** und die Nutzung auf dem **Comma 4 (`mici`)** zugeschnitten ist.
+> ### ⚠️ Important Disclaimer & Notice
+> This repository is **primarily a personal fork** of StarPilot tailored specifically for a **Hyundai Ioniq Hybrid (2016)** running on a **comma 4 (`mici`)**.
 > 
-> * **Zukünftige Anpassungen:** Ich werde diesen Fork in Zukunft kontinuierlich weiterentwickeln und noch tiefgehender an mein spezifisches Fahrzeug anpassen.
-> * **Experimenteller Status:** **Keine der hier implementierten experimentellen Funktionen wurde ausführlich, dauerhaft oder unter allen denkbaren Verkehrsbedingungen getestet.**
-> * **Nutzung auf eigene Gefahr:** Die Nutzung dieser Software erfolgt ausschließlich auf eigenes Risiko und eigene Verantwortung.
+> * **Vehicle-Specific Adaptations:** This fork is actively maintained and adapted to this specific vehicle setup, with further deep CAN and powertrain modifications planned for the future.
+> * **Experimental State:** **None of the custom/experimental features implemented here have undergone extensive, exhaustive, or formal fleet testing across all possible driving conditions.**
+> * **Use at Your Own Risk:** This software is provided as-is without any warranties. Use entirely at your own risk and responsibility.
 
 ---
 
-## 🚀 Spezifische Features in diesem Fork
+## 🚀 Fork-Specific Features & Enhancements
 
-Zusätzlich zu den Standard-Features von StarPilot und FrogPilot beinhaltet dieser Fork folgende Eigenentwicklungen:
+In addition to standard openpilot, FrogPilot, and StarPilot features, this fork introduces the following custom developments:
 
-* 🚗 **Hyundai Ioniq Hybrid (2016) C-CAN Telemetrie & 6-Phasen-Energiemonitor:**
-  * Echtzeit-Erfassung von Atkinson-Verbrennungsmotor, $32\text{ kW}$ E-Motor, Rekuperation, Schubabschaltung und DCT-Getriebe.
-  * 3-Stufen-Berichte: Einzelfahrten beim Parken, automatische Volltankerfassung (Tank-zu-Tank via Tacho-CAN `CLU13`) und unbegrenzte eigene Trips in Galaxy.
-* ⚡ **Ultra-Fast Boot & Persistentes GPU-Kernel-Caching:**
-  * Reduziert die Startzeit auf dem Comma 4 auf $<4\text{ Sekunden}$ durch persistentes Tinygrad OpenCL/Adreno JIT-Shader-Caching (`/data/tinygrad_cache/`), Python-Bytecode-Caching (`/data/pycache`) und I/O-optimierten Param-Sync.
-* 🎯 **Vordermann-Radar Geschwindigkeits-Tracker:**
-  * Live-Berechnung der absoluten Geschwindigkeit des vorausfahrenden Fahrzeugs in km/h ($v_{\text{lead}} = (v_{\text{ego}} + v_{\text{rel}}) \cdot 3{,}6$) mit eigenem Toggle-Switch im Galaxy Live-Monitor.
-* 💡 **Automatisches Fernlicht via Vision & Radar (Auto High-Beam Assist):**
-  * Erkennt Gegenverkehr und vorausfahrende Fahrzeuge per Kamera und Radar und schaltet Fernlicht über Hyundai `LKAS11` CAN-Nachrichten automatisch ab/an.
-  * Vollständiger manueller Fahrer-Override über den Blinkerhebel / Lichtschalter.
-* 🛣️ **Automatischer Rettungsgassen- & Autobahn-Spurversatz:**
-  * Erkennt mehrspurige Autobahnen anhand der Spurwahrscheinlichkeiten von `modelV2`: Linke Spur versetzt nach links ($-0{,}25\text{ m}$), rechte/mittlere Spuren versetzen nach rechts ($+0{,}25\text{ m}$).
-  * **Autobahn-Gating:** Bleibt auf Landstraßen (1 Spur pro Richtung) und in Städten exakt mittig zentriert.
-* 🔧 **OBD-II / UDS Fahrzeugdiagnose & Fehlercode-Scanner:**
-  * Tiefenscan aller 4 Steuergeräte (Motor 0x7E0, 6-Gang-DCT 0x7E1, Hybrid-BMS 0x7E2, ABS/ESP 0x7D1).
-  * Deutsche Klartext-Diagnose und 1-Klick-Löschfunktion für den Fehlerspeicher direkt in Galaxy (`/dtc_scanner`).
-* 🌐 **Eigene Cloud-Anbindung:**
-  * Vollständige Anbindung an die eigene Web-Plattform [`drive.markenjaden.de`](https://drive.markenjaden.de).
+* 🚗 **Hyundai Ioniq Hybrid (2016) C-CAN Telemetry & 6-Phase Energy Tracking:**
+  * Real-time classification of Atkinson ICE, $32\text{ kW}$ electric motor, regenerative braking, fuel cut-off, and 6-speed DCT states.
+  * 3-tier reporting: Automatic single drive reports upon parking, automated tank-to-tank refuel cycle detection via instrument cluster CAN (`CLU13`), and unlimited custom trips in Galaxy.
+* ⚡ **Ultra-Fast Boot & Persistent GPU Kernel Caching:**
+  * Cold boot times on comma 4 reduced to $<4\text{ seconds}$ via persistent Tinygrad OpenCL/Adreno JIT shader caching (`/data/tinygrad_cache/`), Python bytecode pre-caching (`/data/pycache`), and I/O-optimized parameter synchronization.
+* 🎯 **Radar Lead Vehicle Speed Tracker:**
+  * Real-time absolute velocity calculation ($v_{\text{lead}} = (v_{\text{ego}} + v_{\text{rel}}) \cdot 3.6\text{ km/h}$) with an interactive toggle switch in Galaxy's Live Monitor.
+* 💡 **Vision & Radar Auto High-Beam Assist (HBA):**
+  * Detects oncoming headlights and leading taillights via vision and radar, actively switching high beams through Hyundai `LKAS11` CAN messages.
+  * Includes configurable speed thresholds and immediate manual stalk/switch override.
+* 🛣️ **Automatic Emergency Corridor (Rettungsgasse) & Highway Lane Bias:**
+  * Classifies multi-lane highways via `modelV2` lane probabilities: Leftmost lane biases to the left ($-0.25\text{ m}$), rightmost/middle lanes bias to the right ($+0.25\text{ m}$).
+  * **Strict Highway Gating:** Confirmed single-carriageway rural roads (Landstraßen) and urban streets remain strictly lane-centered.
+* 🔧 **OBD-II / UDS Diagnostic Trouble Code (DTC) Scanner:**
+  * Deep-scan diagnostics across 4 primary ECUs (Engine `0x7E0`, 6-speed DCT `0x7E1`, Hybrid BMS `0x7E2`, ABS/ESP `0x7D1`).
+  * Plain-text fault code lookup and 1-click DTC clearing in Galaxy (`/dtc_scanner`).
+* 🌐 **Custom Cloud Integration:**
+  * Full integration with personal Drive web platform instance at [`drive.markenjaden.de`](https://drive.markenjaden.de).
 
 ---
 
-## Über StarPilot
+## About StarPilot
 
 **StarPilot** is a custom fork of [comma.ai's openpilot](https://comma.ai/openpilot),
 an open source driver assistance system.

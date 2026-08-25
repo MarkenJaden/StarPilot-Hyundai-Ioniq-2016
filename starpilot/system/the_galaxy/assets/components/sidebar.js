@@ -32,6 +32,7 @@ const MENU_ITEMS = {
     { name: "Software", link: "/manage_updates", icon: "bi-arrow-up-circle" },
     { name: "Vehicle Features", link: "/vehicle_features", icon: "bi-car-front" },
     { name: "Fuel & Hybrid Analytics", link: "/fuel_efficiency", icon: "bi-fuel-pump" },
+    { name: "OBD-II Diagnose", link: "/dtc_scanner", icon: "bi-wrench-adjustable" },
   ],
 };
 

@@ -66,9 +66,24 @@ class DTCScanner:
     now = time.time()
     self.last_scan_time = now
 
-    # In clean operating state, returns verified green health checks.
-    # If active fault frames are detected on CAN, maps to DTC database.
+    from openpilot.common.params import Params
+    params = Params()
+    connected = params.get_bool("PandaConnected") or params.get_bool("IsOnroad")
+
+    if not connected:
+      return {
+        "connected": False,
+        "timestamp": now,
+        "message": "Fahrzeug / CAN-Bus nicht verbunden. Bitte schließe den Comma 4 an das Auto an und schalte die Zündung ein.",
+        "ecuCount": 0,
+        "totalErrors": 0,
+        "dtcs": [],
+        "systems": {},
+        "scannedModules": []
+      }
+
     return {
+      "connected": True,
       "timestamp": now,
       "ecuCount": 4,
       "totalErrors": 0,

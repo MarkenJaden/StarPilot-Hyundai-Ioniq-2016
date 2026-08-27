@@ -34,7 +34,7 @@ async function clearDTCs() {
   try {
     const res = await fetch("/api/dtc/clear", { method: "POST" })
     if (res.ok) {
-      alert("Fehlerspeicher erfolgreich bereinigt.")
+      alert("Fehlerspeicher-Löschbefehl gesendet.")
       await runScan()
     }
   } catch (err) {
@@ -62,6 +62,8 @@ export function DTCScanner() {
     runScan()
   }
 
+  const isConnected = Boolean(state.scanData?.connected)
+
   return html`
     <div style="padding: 1.5rem; max-width: 1000px; margin: 0 auto; font-family: Inter, sans-serif; color: #f8fafc;">
       <!-- Header -->
@@ -85,69 +87,92 @@ export function DTCScanner() {
           <button
             style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; font-weight: 700; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.4rem;"
             @click="${clearDTCs}"
-            disabled="${() => state.clearing}"
+            disabled="${() => state.clearing || !isConnected}"
           >
             <span>🗑️</span> Fehlerspeicher löschen
           </button>
         </div>
       </div>
 
-      <!-- Health Overview Card -->
-      <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
-        <div style="display: flex; align-items: center; gap: 1rem;">
-          <div style="font-size: 2.2rem; background: rgba(34, 197, 94, 0.15); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(34, 197, 94, 0.4);">
-            ✅
-          </div>
-          <div>
-            <div style="font-size: 1.15rem; font-weight: 800; color: #4ade80;">
-              Alle 4 Hauptsysteme fehlerfrei
+      <!-- Status Card -->
+      ${() => {
+        if (!state.scanData) return ''
+        if (!state.scanData.connected) {
+          return html`
+            <div style="background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.4); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
+              <div style="font-size: 2.2rem; background: rgba(234, 179, 8, 0.15); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(234, 179, 8, 0.4);">
+                🔌
+              </div>
+              <div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #facc15;">
+                  Fahrzeug nicht verbunden
+                </div>
+                <div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.25rem; line-height: 1.4;">
+                  Der Comma 4 empfängt aktuell keine CAN-Daten vom Fahrzeug. Schließe das Gerät an das Auto an und schalte die Zündung ein, um die Steuergeräte auszulesen.
+                </div>
+              </div>
             </div>
-            <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.2rem;">
-              Letzter Scan: ${() => state.lastScanTime || 'Gerade eben'} • 0 aktive Fehlercodes (DTCs)
+          `
+        }
+
+        return html`
+          <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div style="font-size: 2.2rem; background: rgba(34, 197, 94, 0.15); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(34, 197, 94, 0.4);">
+                ✅
+              </div>
+              <div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #4ade80;">
+                  Alle 4 Hauptsysteme fehlerfrei
+                </div>
+                <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.2rem;">
+                  Letzter Scan: ${state.lastScanTime || 'Gerade eben'} • 0 aktive Fehlercodes (DTCs)
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- ECU Modules Grid -->
-      <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: #cbd5e1;">Überwachte Steuergeräte</h3>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-        <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <span style="font-size: 0.75rem; color: #38bdf8; font-weight: 700;">0x7E0 • ECU</span>
-            <span style="font-size: 0.75rem; font-weight: 700; color: #22c55e; background: rgba(34,197,94,0.15); padding: 0.15rem 0.4rem; border-radius: 4px;">OK</span>
-          </div>
-          <div style="font-weight: 700; font-size: 0.95rem;">1.6L GDI Motor</div>
-          <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.2rem;">Einspritzung, Zündung, Lambda</div>
-        </div>
+          <!-- ECU Modules Grid -->
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: #cbd5e1;">Überwachte Steuergeräte</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.75rem; color: #38bdf8; font-weight: 700;">0x7E0 • ECU</span>
+                <span style="font-size: 0.75rem; font-weight: 700; color: #22c55e; background: rgba(34,197,94,0.15); padding: 0.15rem 0.4rem; border-radius: 4px;">OK</span>
+              </div>
+              <div style="font-weight: 700; font-size: 0.95rem;">1.6L GDI Motor</div>
+              <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.2rem;">Einspritzung, Zündung, Lambda</div>
+            </div>
 
-        <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <span style="font-size: 0.75rem; color: #38bdf8; font-weight: 700;">0x7E1 • TCU</span>
-            <span style="font-size: 0.75rem; font-weight: 700; color: #22c55e; background: rgba(34,197,94,0.15); padding: 0.15rem 0.4rem; border-radius: 4px;">OK</span>
-          </div>
-          <div style="font-weight: 700; font-size: 0.95rem;">6-Gang DCT Getriebe</div>
-          <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.2rem;">Doppelkupplungs-Aktuatoren</div>
-        </div>
+            <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.75rem; color: #38bdf8; font-weight: 700;">0x7E1 • TCU</span>
+                <span style="font-size: 0.75rem; font-weight: 700; color: #22c55e; background: rgba(34,197,94,0.15); padding: 0.15rem 0.4rem; border-radius: 4px;">OK</span>
+              </div>
+              <div style="font-weight: 700; font-size: 0.95rem;">6-Gang DCT Getriebe</div>
+              <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.2rem;">Doppelkupplungs-Aktuatoren</div>
+            </div>
 
-        <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <span style="font-size: 0.75rem; color: #38bdf8; font-weight: 700;">0x7E2 • BMS/HEV</span>
-            <span style="font-size: 0.75rem; font-weight: 700; color: #22c55e; background: rgba(34,197,94,0.15); padding: 0.15rem 0.4rem; border-radius: 4px;">OK</span>
-          </div>
-          <div style="font-weight: 700; font-size: 0.95rem;">Hybrid-BMS & Inverter</div>
-          <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.2rem;">1.56 kWh Akku, 32 kW E-Motor</div>
-        </div>
+            <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.75rem; color: #38bdf8; font-weight: 700;">0x7E2 • BMS/HEV</span>
+                <span style="font-size: 0.75rem; font-weight: 700; color: #22c55e; background: rgba(34,197,94,0.15); padding: 0.15rem 0.4rem; border-radius: 4px;">OK</span>
+              </div>
+              <div style="font-weight: 700; font-size: 0.95rem;">Hybrid-BMS & Inverter</div>
+              <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.2rem;">1.56 kWh Akku, 32 kW E-Motor</div>
+            </div>
 
-        <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <span style="font-size: 0.75rem; color: #38bdf8; font-weight: 700;">0x7D1 • ESC</span>
-            <span style="font-size: 0.75rem; font-weight: 700; color: #22c55e; background: rgba(34,197,94,0.15); padding: 0.15rem 0.4rem; border-radius: 4px;">OK</span>
+            <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.75rem; color: #38bdf8; font-weight: 700;">0x7D1 • ESC</span>
+                <span style="font-size: 0.75rem; font-weight: 700; color: #22c55e; background: rgba(34,197,94,0.15); padding: 0.15rem 0.4rem; border-radius: 4px;">OK</span>
+              </div>
+              <div style="font-weight: 700; font-size: 0.95rem;">ABS / ESP / Bremse</div>
+              <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.2rem;">Rekuperatives Bremsmanagement</div>
+            </div>
           </div>
-          <div style="font-weight: 700; font-size: 0.95rem;">ABS / ESP / Bremse</div>
-          <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.2rem;">Rekuperatives Bremsmanagement</div>
-        </div>
-      </div>
+        `
+      }}
 
       <!-- DTC Code Lookup Search -->
       <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1.25rem;">

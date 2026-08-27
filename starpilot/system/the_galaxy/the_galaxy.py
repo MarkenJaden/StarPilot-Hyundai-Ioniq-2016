@@ -5143,7 +5143,7 @@ def setup(app):
         update_starpilot_toggles()
         return jsonify({
           "message": f"Connect Server changed to '{str_val}'. Reboot the device to apply changes.",
-          "updated": {"ConnectServer": str_val, "UseKonikServer": str_val == "konik", "UseDriveServer": str_val == "drive"},
+          "updated": {"ConnectServer": str_val, "UseKonikServer": str_val == "konik"},
         }), 200
 
       # 1. Prevent changing the model or reboot-required toggles while the car is actively driving

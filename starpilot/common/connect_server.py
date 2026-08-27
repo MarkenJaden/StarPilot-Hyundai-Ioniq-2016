@@ -37,14 +37,7 @@ def _remove_param_from_live_and_cache(key, params, params_cache=None):
 def prepare_server_switch(selection: str, params: Params, params_cache=None):
   use_drive = selection in ("drive connect", "drive")
   use_konik = selection in ("konik connect", "konik")
-  try:
-    params.put_bool("UseDriveServer", use_drive)
-  except Exception:
-    pass
-  try:
-    params.put_bool("UseKonikServer", use_konik)
-  except Exception:
-    pass
+  params.put_bool("UseKonikServer", use_konik)
   if use_drive:
     params.put("ConnectServer", "drive")
     _remove_param_from_live_and_cache("KonikDongleId", params, params_cache)

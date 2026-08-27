@@ -179,7 +179,7 @@ procs += [
 ]
 
 device_type = HARDWARE.get_device_type()
-if device_type in ("tici", "tizi", "mici"):
+if device_type in ("tici", "tizi"):
   procs.append(big_device_ui_process())
 else:
   procs.append(PythonProcess("ui", "selfdrive.ui.ui", always_run, watchdog_max_dt=UI_WATCHDOG_MAX_DT))

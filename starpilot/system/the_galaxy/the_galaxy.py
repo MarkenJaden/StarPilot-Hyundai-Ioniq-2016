@@ -631,8 +631,15 @@ def _discover_legacy_sentry_events(known_event_ids: set[str]) -> list[dict]:
   return discovered
 
 
+_sentry_catalog_cache = []
+_sentry_catalog_cache_time = 0.0
+
 def _sentry_event_catalog() -> list[dict]:
+  global _sentry_catalog_cache, _sentry_catalog_cache_time
+  now = time.monotonic()
   with _SENTRY_EVENT_INDEX_LOCK:
+    if _sentry_catalog_cache and (now - _sentry_catalog_cache_time) < 15.0:
+      return list(_sentry_catalog_cache)
     events = _load_sentry_event_catalog_unlocked()
     known_event_ids = {event["eventId"] for event in events}
     legacy_events = _discover_legacy_sentry_events(known_event_ids)
@@ -644,11 +651,16 @@ def _sentry_event_catalog() -> list[dict]:
       _save_sentry_event_catalog_unlocked(events)
     elif legacy_events:
       _save_sentry_event_catalog_unlocked(events)
-    return events
+    _sentry_catalog_cache = events
+    _sentry_catalog_cache_time = now
+    return list(events)
 
 
 def _record_sentry_event(event: dict) -> None:
+  global _sentry_catalog_cache, _sentry_catalog_cache_time
   with _SENTRY_EVENT_INDEX_LOCK:
+    _sentry_catalog_cache = []
+    _sentry_catalog_cache_time = 0.0
     events = _load_sentry_event_catalog_unlocked()
     known_event_ids = {existing["eventId"] for existing in events}
     events.extend(_discover_legacy_sentry_events(known_event_ids))
@@ -7526,7 +7538,9 @@ def setup(app):
 
     current_event = _stored_sentry_event()
     current_event_deleted = current_event is not None and current_event.get("eventId") == event_id
+    global _sentry_catalog_cache
     with _SENTRY_EVENT_INDEX_LOCK:
+      _sentry_catalog_cache = []
       events = _load_sentry_event_catalog_unlocked()
       retained_events = [event for event in events if event.get("eventId") != event_id]
       catalog_deleted = len(retained_events) != len(events)

@@ -93,10 +93,10 @@ def allow_uploads(started: bool, params: Params, CP: car.CarParams, starpilot_to
           (starpilot_toggles.no_onroad_uploads and not started))
 
 def run_speed_limit_filler(started: bool, params: Params, CP: car.CarParams, starpilot_toggles: SimpleNamespace) -> bool:
-  return starpilot_toggles.speed_limit_filler
+  return started and starpilot_toggles.speed_limit_filler
 
 def run_speed_limit_vision(started: bool, params: Params, CP: car.CarParams, starpilot_toggles: SimpleNamespace) -> bool:
-  return starpilot_toggles.vision_speed_limit_detection
+  return started and starpilot_toggles.vision_speed_limit_detection
 
 def run_navigationd(started: bool, params: Params, CP: car.CarParams, starpilot_toggles: SimpleNamespace) -> bool:
   return started and params.get("NavDestination") is not None
@@ -186,7 +186,7 @@ else:
 
 procs += [
   PythonProcess("device_syncd", "starpilot.system.device_syncd", always_run, nice=19),
-  PythonProcess("starpilot_process", "starpilot.starpilot_process", always_run),
+  PythonProcess("starpilot_process", "starpilot.starpilot_process", always_run, nice=10),
   PythonProcess("mapd", "starpilot.navigation.mapd_wrapper", always_run, nice=19),
   PythonProcess("navigationd", "starpilot.navigation.navigationd", run_navigationd, nice=19),
   PythonProcess("speed_limit_filler", "starpilot.system.speed_limit_filler", run_speed_limit_filler, nice=19),

@@ -17,7 +17,7 @@ from openpilot.common.params import Params
 
 
 class UIParamCache:
-  def __init__(self, params: Params | Any | None = None, ttl: float = 0.1,
+  def __init__(self, params: Params | Any | None = None, ttl: float = 1.0,
                clock: Callable[[], float] = time.monotonic):
     self._params = params if params is not None else Params()
     self._ttl = max(0.0, ttl)

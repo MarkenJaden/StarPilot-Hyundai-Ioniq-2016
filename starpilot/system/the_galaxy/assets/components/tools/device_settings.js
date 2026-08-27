@@ -1600,14 +1600,25 @@ function renderSettingRow(p) {
     `
   } else if (p.ui_type === "dropdown") {
     rowControl = html`
-      <select
-        class="ds-select"
-        id="ds-${p.key}"
-        data-endpoint="${p.options_endpoint || ""}"
-        disabled="${() => isLocked()}"
-        @change="${() => updateParam(p.key, "dropdown")}">
-        <option value="">Loading...</option>
-      </select>
+      <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; max-width: 320px;">
+        <select
+          class="ds-select"
+          id="ds-${p.key}"
+          data-endpoint="${p.options_endpoint || ""}"
+          disabled="${() => isLocked()}"
+          @change="${() => updateParam(p.key, "dropdown")}">
+          <option value="">Loading...</option>
+        </select>
+        ${p.key === "ConnectServer" ? html`
+          <a
+            href="/pairing"
+            style="display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); color: #38bdf8; font-size: 0.85rem; font-weight: 700; padding: 0.4rem 0.8rem; border-radius: 6px; text-decoration: none; cursor: pointer; transition: all 0.2s;"
+            @click="${(e) => { e.preventDefault(); if (window.__theGalaxyNavigate) window.__theGalaxyNavigate('/pairing'); }}"
+          >
+            <span>📱</span> Pairing QR-Code anzeigen
+          </a>
+        ` : ''}
+      </div>
     `
   } else if (isText) {
     rowControl = html`

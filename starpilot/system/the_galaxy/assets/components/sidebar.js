@@ -34,6 +34,7 @@ const MENU_ITEMS = {
     { name: "Fuel & Hybrid Analytics", link: "/fuel_efficiency", icon: "bi-fuel-pump" },
     { name: "OBD-II Diagnose", link: "/dtc_scanner", icon: "bi-wrench-adjustable" },
     { name: "CAN Tasten-Recorder", link: "/can_sniffer", icon: "bi-disc" },
+    { name: "Gerät koppeln / QR", link: "/pairing", icon: "bi-qr-code-scan" },
   ],
 };
 

@@ -6844,6 +6844,59 @@ def setup(app):
     success = get_can_sniffer().delete_recording(rec_id)
     return jsonify({"success": success}), 200
 
+  @app.route("/api/pairing_info", methods=["GET"])
+  def get_pairing_info():
+    try:
+      import base64
+      import io
+      import qrcode
+      from openpilot.common.api import Api
+      from openpilot.common.swaglog import cloudlog
+      from openpilot.selfdrive.ui.mici.widgets.pairing_dialog import (
+        get_pairing_host,
+        get_pairing_service_label,
+        get_pairing_backend_name,
+      )
+
+      dongle_id = params.get("DongleId", encoding="utf-8") or params.get("KonikDongleId", encoding="utf-8") or ""
+      host = get_pairing_host(params)
+      service_label = get_pairing_service_label(params)
+      backend_name = get_pairing_backend_name(params)
+      server = params.get("ConnectServer", encoding="utf-8") or "comma"
+
+      token = ""
+      try:
+        token = Api(dongle_id).get_token({"pair": True})
+      except Exception as e:
+        cloudlog.warning(f"Failed to generate pairing token: {e}")
+
+      pairing_url = f"https://{host}/?pair={token}" if token else f"https://{host}/"
+
+      qr_data_url = ""
+      try:
+        qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=8, border=2)
+        qr.add_data(pairing_url)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="#0f172a", back_color="#ffffff")
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        qr_data_url = f"data:image/png;base64,{base64.b64encode(buf.getvalue()).decode('ascii')}"
+      except Exception as e:
+        cloudlog.warning(f"Failed to generate pairing QR code: {e}")
+
+      return jsonify({
+        "dongle_id": dongle_id,
+        "pairing_url": pairing_url,
+        "host": host,
+        "service_label": service_label,
+        "backend_name": backend_name,
+        "server": server,
+        "qr_data_url": qr_data_url,
+        "has_token": bool(token),
+      }), 200
+    except Exception as e:
+      return jsonify({"error": str(e)}), 500
+
   @app.route("/api/testing_grounds", methods=["GET"])
   def get_testing_grounds():
     state = _get_testing_grounds_state()

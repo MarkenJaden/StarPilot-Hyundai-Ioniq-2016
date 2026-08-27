@@ -140,11 +140,31 @@ try:
   ffmpeg = importlib.import_module("ffmpeg")
 except ModuleNotFoundError:
   ffmpeg = None
+try:
+  eigen = importlib.import_module("eigen")
+except ModuleNotFoundError:
+  eigen = None
 
 capnproto_include_dirs = [capnproto.INCLUDE_DIR] if capnproto is not None else []
 capnproto_lib_dirs = [capnproto.LIB_DIR] if capnproto is not None else []
 ffmpeg_include_dirs = [ffmpeg.INCLUDE_DIR] if ffmpeg is not None else []
 ffmpeg_lib_dirs = [ffmpeg.LIB_DIR] if ffmpeg is not None else []
+
+eigen_include_dirs = []
+if eigen is not None:
+  if hasattr(eigen, "INCLUDE_DIR") and eigen.INCLUDE_DIR:
+    eigen_include_dirs.extend([eigen.INCLUDE_DIR, os.path.dirname(eigen.INCLUDE_DIR)])
+  if hasattr(eigen, "__file__") and eigen.__file__:
+    pkg_dir = os.path.dirname(eigen.__file__)
+    eigen_include_dirs.extend([
+      os.path.join(pkg_dir, "install"),
+      os.path.join(pkg_dir, "install", "include"),
+    ])
+
+for site_pkg in sys.path:
+  candidate = os.path.join(site_pkg, "eigen", "install")
+  if os.path.isdir(candidate):
+    eigen_include_dirs.extend([candidate, os.path.join(candidate, "include")])
 
 # Cross-builds install managed dependencies in /work/.venv-linux-arm64, but
 # comma devices expose the same packages from /usr/local/venv. Never embed the
@@ -308,7 +328,7 @@ env = Environment(
   # Managed dependencies must precede the compatibility sysroot. The sysroot
   # can intentionally retain legacy libraries for C3 support, but new release
   # binaries must link against the versions shipped in the managed venv.
-  CPPPATH=capnproto_include_dirs + ffmpeg_include_dirs + cpppath + [
+  CPPPATH=capnproto_include_dirs + ffmpeg_include_dirs + eigen_include_dirs + cpppath + [
     "#",
     "#third_party/acados/include",
     "#third_party/acados/include/blasfeo/include",

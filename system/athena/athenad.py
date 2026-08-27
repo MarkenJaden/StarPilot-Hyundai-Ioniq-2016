@@ -41,10 +41,21 @@ from openpilot.system.athena.registration import UNREGISTERED_DONGLE_ID
 from openpilot.system.version import get_build_metadata
 from openpilot.system.hardware.hw import Paths
 
-from openpilot.starpilot.common.starpilot_utilities import use_konik_server
+from openpilot.starpilot.common.starpilot_utilities import use_konik_server, use_drive_server
 
 
-ATHENA_HOST = os.getenv('ATHENA_HOST', f"wss://athena.{'konik.ai' if use_konik_server() else 'comma.ai'}")
+def get_athena_host() -> str:
+  env = os.getenv('ATHENA_HOST')
+  if env:
+    return env
+  if use_drive_server():
+    return "wss://drive.markenjaden.de"
+  if use_konik_server():
+    return "wss://athena.konik.ai"
+  return "wss://athena.comma.ai"
+
+
+ATHENA_HOST = get_athena_host()
 HANDLER_THREADS = int(os.getenv('HANDLER_THREADS', "4"))
 LOCAL_PORT_WHITELIST = {22, }  # SSH
 

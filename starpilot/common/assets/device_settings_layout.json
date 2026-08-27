@@ -4020,20 +4020,25 @@
         "settings_tier": "simple"
       },
       {
-        "key": "UseKonikServer",
-        "label": "Use Konik Server",
-        "description": "Upload driving data to \"stable.konik.ai\" instead of \"connect.comma.ai\".",
-        "data_type": "bool",
-        "ui_type": "toggle",
-        "parent_key": "DeviceManagement",
-        "settings_tier": "simple"
-      },
-      {
-        "key": "UseDriveServer",
-        "label": "Use Drive Server (drive.markenjaden.de)",
-        "description": "Upload driving data and pair device with \"drive.markenjaden.de\".",
-        "data_type": "bool",
-        "ui_type": "toggle",
+        "key": "ConnectServer",
+        "label": "Connect Server",
+        "description": "Select the server backend for device pairing, remote connect, and driving data uploads.",
+        "data_type": "string",
+        "ui_type": "dropdown",
+        "options": [
+          {
+            "value": "comma",
+            "label": "comma connect (connect.comma.ai)"
+          },
+          {
+            "value": "konik",
+            "label": "konik connect (stable.konik.ai)"
+          },
+          {
+            "value": "drive",
+            "label": "drive connect (drive.markenjaden.de)"
+          }
+        ],
         "parent_key": "DeviceManagement",
         "settings_tier": "simple"
       },

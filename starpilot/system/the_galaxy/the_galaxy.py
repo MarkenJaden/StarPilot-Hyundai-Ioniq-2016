@@ -5127,6 +5127,15 @@ def setup(app):
           "updated": {"ForceOffroad": enabled, "ForceOnroad": False},
         }), 200
 
+      if key == "ConnectServer":
+        from openpilot.starpilot.common.connect_server import prepare_server_switch
+        prepare_server_switch(str_val, params)
+        update_starpilot_toggles()
+        return jsonify({
+          "message": f"Connect Server changed to '{str_val}'. Reboot the device to apply changes.",
+          "updated": {"ConnectServer": str_val, "UseKonikServer": str_val == "konik", "UseDriveServer": str_val == "drive"},
+        }), 200
+
       # 1. Prevent changing the model or reboot-required toggles while the car is actively driving
       reboot_keys = {"Model", "DrivingModel", "AlwaysOnLateral", "DisableOpenpilotLongitudinal", "ForceTorqueController", "NNFF", "NNFFLite"}
       if key in reboot_keys and params.get_bool("IsOnroad"):

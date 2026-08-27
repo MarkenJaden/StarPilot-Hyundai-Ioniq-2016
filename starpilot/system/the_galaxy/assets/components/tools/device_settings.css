@@ -289,30 +289,38 @@
 
 .ds-select {
   appearance: none;
-  background-color: var(--color-gray-950);
-  border: 1px solid var(--track-color);
+  background-color: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.5rem;
-  color: var(--color-gray-200);
+  color: #f8fafc !important;
   cursor: pointer;
   font-family: inherit;
   font-size: 0.95rem;
-  padding: 0.5rem 2rem 0.5rem 1rem;
+  font-weight: 600;
+  padding: 0.5rem 2.2rem 0.5rem 1rem;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   width: 100%;
-  max-width: 250px;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/200.svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  max-width: 320px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/200.svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 0.5rem center;
-  background-size: 1em;
+  background-position: right 0.75rem center;
+  background-size: 1.1em;
+}
+
+.ds-select option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  padding: 0.6rem;
+  font-weight: 500;
 }
 
 .ds-select:hover {
-  border-color: var(--color-gray-500);
+  border-color: #38bdf8;
 }
 
 .ds-select:focus {
-  border-color: var(--main-fg);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
   outline: none;
 }
 

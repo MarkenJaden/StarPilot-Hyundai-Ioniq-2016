@@ -3064,6 +3064,13 @@ def _get_param_type_info():
         _cached_allowed_keys.add(alias_key)
         types[alias_key] = types.get(real_key, str)
 
+    _cached_allowed_keys.add("ConnectServer")
+    types["ConnectServer"] = str
+    _cached_allowed_keys.add("UseDriveServer")
+    types["UseDriveServer"] = bool
+    _cached_allowed_keys.add("UseKonikServer")
+    types["UseKonikServer"] = bool
+
     _cached_param_types = types
   return _cached_allowed_keys, _cached_param_types
 
@@ -3075,6 +3082,9 @@ def _get_static_default_param_values():
       for key, default_val, _, _ in starpilot_default_params
       if key not in EXCLUDED_KEYS
     }
+    _cached_static_default_values.setdefault("ConnectServer", "comma")
+    _cached_static_default_values.setdefault("UseDriveServer", "0")
+    _cached_static_default_values.setdefault("UseKonikServer", "0")
   return _cached_static_default_values
 
 def _get_default_param_values():

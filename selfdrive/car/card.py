@@ -320,7 +320,7 @@ class Car:
     elif any(be.type in (ButtonType.decelCruise, ButtonType.setCruise) for be in CS.buttonEvents):
       self.resume_prev_button = False
 
-    FPCS = self.starpilot_card.update(CS, FPCS, self.sm, self.starpilot_toggles)
+    FPCS = self.starpilot_card.update(CS, FPCS, self.sm, self.starpilot_toggles, cs_obj=self.CI.CS)
     return CS, RD, FPCS
 
   def state_publish(self, CS: car.CarState, RD: structs.RadarDataT | None, FPCS: custom.StarPilotCarState):

@@ -18,6 +18,7 @@ from openpilot.starpilot.common.experimental_state import (
 from openpilot.starpilot.common.favorite_slots import FAVORITE_ACTION_TRAFFIC_MODE_COUNTER, toggle_favorite_slot
 from openpilot.starpilot.common.starpilot_utilities import is_FrogsGoMoo
 from openpilot.starpilot.common.starpilot_variables import ERROR_LOGS_PATH, GearShifter, NON_DRIVING_GEARS
+from openpilot.starpilot.controls.lib.fuel_tracker import get_fuel_tracker
 
 HYUNDAI_MAIN_CRUISE_AOL_CONFIRM_TIMEOUT_FRAMES = 100
 
@@ -80,6 +81,8 @@ class StarPilotCard:
     self.very_long_press_threshold = CRUISE_LONG_PRESS * 5
 
     self.error_log = ERROR_LOGS_PATH / "error.txt"
+    self.fuel_tracker = get_fuel_tracker()
+    self._fuel_tracker_frame = 0
 
   def handle_button_event(self, key, sm, starpilot_toggles):
     if sm["carControl"].longActive and getattr(starpilot_toggles, f"experimental_mode_via_{key}"):
@@ -136,7 +139,7 @@ class StarPilotCard:
     else:
       self.params.put_bool_nonblocking("ExperimentalMode", not sm["selfdriveState"].experimentalMode)
 
-  def update(self, carState, starpilotCarState, sm, starpilot_toggles):
+  def update(self, carState, starpilotCarState, sm, starpilot_toggles, cs_obj=None):
     self.switchback_mode_enabled = self.params_memory.get_bool("SwitchbackModeEnabled")
     self._handle_favorite_traffic_mode_action(sm)
 
@@ -378,5 +381,37 @@ class StarPilotCard:
     starpilotCarState.pauseLateral = self.pause_lateral
     starpilotCarState.pauseLongitudinal = self.pause_longitudinal
     starpilotCarState.trafficModeEnabled = self.traffic_mode_enabled
+
+    # Real-time fuel efficiency & hybrid phase tracking
+    self._fuel_tracker_frame += 1
+    if self._fuel_tracker_frame % 5 == 0:
+      engine_rpm = getattr(cs_obj, "engine_rpm", 0.0) if cs_obj else 0.0
+      gas_pos_pct = getattr(cs_obj, "gas_pedal_pct", 0.0) if cs_obj else (carState.gas * 100.0 if carState.gasPressed else 0.0)
+      engine_torque = getattr(cs_obj, "engine_torque", 0.0) if cs_obj else 0.0
+      regen_active = bool(getattr(cs_obj, "regen_active", False) or (carState.brakeLights and carState.vEgo > 2.0 and not carState.gasPressed))
+
+      lead_d_rel = None
+      lead_v_rel = None
+      lead_status = False
+      if sm.seen['radarState'] and sm.valid['radarState']:
+        lead = sm['radarState'].leadOne
+        if lead.status:
+          lead_d_rel = float(lead.dRel)
+          lead_v_rel = float(lead.vRel)
+          lead_status = True
+
+      self.fuel_tracker.update(
+        v_ego_mps=carState.vEgo,
+        engine_rpm=engine_rpm,
+        gas_pos_pct=gas_pos_pct,
+        brake_pressed=carState.brakePressed,
+        regen_active=regen_active,
+        engine_torque_pct=engine_torque,
+        fuel_cut=bool(carState.vEgo > 4.0 and not carState.gasPressed and engine_rpm > 1000.0),
+        is_onroad=bool(self.params.get_bool("IsOnroad")),
+        lead_d_rel=lead_d_rel,
+        lead_v_rel=lead_v_rel,
+        lead_status=lead_status,
+      )
 
     return starpilotCarState

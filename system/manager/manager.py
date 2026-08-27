@@ -1154,6 +1154,7 @@ def manager_thread() -> None:
   warned_onroad_reboot = False
   offroad_nav_destination = None
   offroad_nav_started_at = None
+  running_prev = None
 
   # StarPilot variables
   sm = sm.extend(['starpilotPlan'])
@@ -1204,8 +1205,10 @@ def manager_thread() -> None:
 
     running = ' '.join("{}{}\u001b[0m".format("\u001b[32m" if p.proc.is_alive() else "\u001b[31m", p.name)
                        for p in managed_processes.values() if p.proc)
-    print(running)
-    cloudlog.debug(running)
+    if running != running_prev:
+      print(running)
+      cloudlog.debug(running)
+      running_prev = running
 
     # send managerState
     msg = messaging.new_message('managerState', valid=True)
@@ -1239,7 +1242,7 @@ def manager_thread() -> None:
       break
 
     # StarPilot variables
-    starpilot_toggles = get_starpilot_toggles(sm, read_persisted_force_params=True)
+    starpilot_toggles = get_starpilot_toggles(sm, read_persisted_force_params=False)
 
 
 def main() -> None:

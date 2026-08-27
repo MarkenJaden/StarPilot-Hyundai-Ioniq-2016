@@ -442,7 +442,22 @@ class CarState(CarStateBase):
       self.low_speed_alert = True
     if ret.vEgo > (self.CP.minSteerSpeed + 4.):
       self.low_speed_alert = False
-    ret.lowSpeedAlert = self.low_speed_alert
+    # Engine RPM and torque (from EMS11 on Hyundai classic CAN)
+    if "EMS11" in cp.vl and cp.ts_nanos["EMS11"]["N"] > 0:
+      self.engine_rpm = float(cp.vl["EMS11"]["N"])
+      self.engine_torque = float(cp.vl["EMS11"]["TQI"])
+    else:
+      self.engine_rpm = 0.0
+      self.engine_torque = 0.0
+
+    if self.CP.flags & HyundaiFlags.HYBRID:
+      self.gas_pedal_pct = float(cp.vl["E_EMS11"]["CR_Vcu_AccPedDep_Pos"]) * 100.0 / 254.0
+    elif self.CP.flags & HyundaiFlags.EV:
+      self.gas_pedal_pct = float(cp.vl["E_EMS11"]["Accel_Pedal_Pos"]) * 100.0 / 254.0
+    else:
+      self.gas_pedal_pct = 100.0 if ret.gasPressed else 0.0
+
+    self.regen_active = bool(cp.vl["TCS13"]["DriverOverride"] == 2) if "TCS13" in cp.vl else False
 
     fp_ret = custom.StarPilotCarState.new_message()
     if self.CP.carFingerprint in CLASSIC_MEDIA_BUTTON_CARS:
@@ -694,14 +709,59 @@ class CarState(CarStateBase):
       }
 
     msgs = [
+      ("MDPS12", 50),
+      ("MDPS11", 100),
+      ("TCS11", 100),
+      ("TCS13", 50),
+      ("TCS15", 10),
+      ("CLU11", 50),
+      ("CLU14", 10),
+      ("CLU15", 5),
+      ("ESP12", 100),
+      ("CGW1", 10),
+      ("CGW2", 5),
+      ("CGW4", 5),
+      ("WHL_SPD11", 50),
+      ("SAS11", 100),
+      ("EMS11", 0),
+      ("EMS12", 100),
+      ("EMS16", 100),
       ("BCM_PO_11", 0),
       ("CLU13", 0),
     ]
+    if self.CP.flags & (HyundaiFlags.HYBRID | HyundaiFlags.EV):
+      msgs += [
+        ("E_EMS11", 50),
+        ("ELECT_GEAR", 20),
+      ]
+    elif self.CP.flags & HyundaiFlags.FCEV:
+      msgs += [
+        ("FCEV_ACCELERATOR", 100),
+        ("EMS20", 100),
+      ]
+    elif self.CP.flags & HyundaiFlags.TCU_GEARS:
+      msgs += [
+        ("TCU12", 100),
+      ]
+    else:
+      msgs += [
+        ("LVR12", 100),
+      ]
+
+    if self.CP.flags & HyundaiFlags.USE_FCA:
+      msgs.append(("FCA11", 50))
+    elif not (self.CP.flags & HyundaiFlags.NON_SCC):
+      msgs += [
+        ("SCC11", 50),
+        ("SCC12", 50),
+      ]
+
+    if self.CP.enableBsm:
+      msgs.append(("LCA11", 20))
+
     if CP.carFingerprint in CLASSIC_MEDIA_BUTTON_CARS:
       # Steering-wheel media switches are event-driven on the refresh Elantra.
       msgs.append(("GW_SWRC_PE", 0))
-    if CP.flags & HyundaiFlags.NON_SCC and not (CP.flags & HyundaiFlags.NON_SCC_NO_FCA):
-      msgs.append(("FCA11", 0))  # Non-SCC trims can stop publishing FCA11; don't let it poison canValid
 
     parsers = {
       Bus.pt: CANParser(DBC[CP.carFingerprint][Bus.pt], msgs, 0),

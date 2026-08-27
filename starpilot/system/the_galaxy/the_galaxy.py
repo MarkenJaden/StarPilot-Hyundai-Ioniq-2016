@@ -1768,73 +1768,8 @@ _fuel_tracker_lock = threading.Lock()
 _fuel_tracker_worker_thread = None
 _fuel_tracker_last_client_request_ts = 0.0
 
-def _fuel_tracker_worker():
-  global _fuel_tracker_worker_thread
-  try:
-    from openpilot.starpilot.controls.lib.fuel_tracker import get_fuel_tracker
-    tracker = get_fuel_tracker()
-    sm = messaging.SubMaster(["carState", "controlsState", "radarState"], poll="carState")
-  except Exception:
-    with _fuel_tracker_lock:
-      _fuel_tracker_worker_thread = None
-    return
-
-  while True:
-    time.sleep(0.05)
-    with _fuel_tracker_lock:
-      idle_for = time.monotonic() - _fuel_tracker_last_client_request_ts
-    if idle_for >= 60.0:
-      break
-    try:
-      sm.update(0)
-      cs = sm["carState"]
-      v_ego = float(getattr(cs, "vEgo", 0.0))
-      gas_val = float(getattr(cs, "gas", 0.0))
-      gas_pos = gas_val * 100.0 if gas_val > 0 else (30.0 if bool(getattr(cs, "gasPressed", False)) else 0.0)
-      brake_pressed = bool(getattr(cs, "brakePressed", False))
-      engine_rpm = float(getattr(cs, "engineRpm", 0.0)) if hasattr(cs, "engineRpm") else None
-      regen_active = bool(getattr(cs, "brakeLights", False) and v_ego > 2.0 and gas_pos <= 0.0)
-      is_onroad = bool(params.get_bool("IsOnroad"))
-      fuel_level = float(getattr(cs, "fuelLevel", 0.0)) if hasattr(cs, "fuelLevel") else None
-
-      # Lead radar telemetry
-      lead_d_rel = None
-      lead_v_rel = None
-      lead_status = False
-      if "radarState" in sm.updated and sm.valid["radarState"]:
-        radar = sm["radarState"]
-        if hasattr(radar, "leadOne") and bool(getattr(radar.leadOne, "status", False)):
-          lead = radar.leadOne
-          lead_d_rel = float(getattr(lead, "dRel", 0.0))
-          lead_v_rel = float(getattr(lead, "vRel", 0.0))
-          lead_status = True
-
-      tracker.update(
-        v_ego_mps=v_ego,
-        engine_rpm=engine_rpm,
-        gas_pos_pct=gas_pos,
-        brake_pressed=brake_pressed,
-        regen_active=regen_active,
-        is_onroad=is_onroad,
-        fuel_level_segments=fuel_level,
-        lead_d_rel=lead_d_rel,
-        lead_v_rel=lead_v_rel,
-        lead_status=lead_status,
-      )
-    except Exception:
-      pass
-
-  with _fuel_tracker_lock:
-    _fuel_tracker_worker_thread = None
-
 def _ensure_fuel_tracker_worker():
-  global _fuel_tracker_worker_thread, _fuel_tracker_last_client_request_ts
-  with _fuel_tracker_lock:
-    _fuel_tracker_last_client_request_ts = time.monotonic()
-    if _fuel_tracker_worker_thread and _fuel_tracker_worker_thread.is_alive():
-      return
-    _fuel_tracker_worker_thread = threading.Thread(target=_fuel_tracker_worker, daemon=True)
-    _fuel_tracker_worker_thread.start()
+  pass
 
 
 def _set_fast_update_state(**kwargs):

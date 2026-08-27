@@ -12,21 +12,38 @@ from openpilot.system.ui.lib.application import FontWeight, gui_app
 from openpilot.system.ui.widgets.label import UnifiedLabel
 
 
+def use_drive_server(params: Params | None = None) -> bool:
+  params = params or Params()
+  return params.get_bool("UseDriveServer") or params.get("ConnectServer", encoding="utf-8") == "drive"
+
+
 def use_konik_server(params: Params | None = None) -> bool:
   params = params or Params()
-  return params.get_bool("UseKonikServer")
+  return params.get_bool("UseKonikServer") or params.get("ConnectServer", encoding="utf-8") == "konik"
 
 
 def get_pairing_host(params: Params | None = None) -> str:
-  return "stable.konik.ai" if use_konik_server(params) else "connect.comma.ai"
+  if use_drive_server(params):
+    return "drive.markenjaden.de"
+  if use_konik_server(params):
+    return "stable.konik.ai"
+  return "connect.comma.ai"
 
 
 def get_pairing_service_label(params: Params | None = None) -> str:
-  return "konik connect" if use_konik_server(params) else "comma connect"
+  if use_drive_server(params):
+    return "drive connect"
+  if use_konik_server(params):
+    return "konik connect"
+  return "comma connect"
 
 
 def get_pairing_backend_name(params: Params | None = None) -> str:
-  return "Konik" if use_konik_server(params) else "comma.ai"
+  if use_drive_server(params):
+    return "Drive"
+  if use_konik_server(params):
+    return "Konik"
+  return "comma.ai"
 
 
 class PairingDialog(NavWidget):

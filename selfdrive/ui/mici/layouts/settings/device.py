@@ -21,7 +21,7 @@ from openpilot.selfdrive.ui.ui_state import device, ui_state
 from openpilot.system.ui.widgets.label import UnifiedLabel
 from openpilot.system.ui.widgets.html_render import HtmlModal, HtmlRenderer
 from openpilot.system.athena.registration import UNREGISTERED_DONGLE_ID
-from openpilot.starpilot.common.connect_server import prepare_konik_server_switch
+from openpilot.starpilot.common.connect_server import prepare_konik_server_switch, prepare_server_switch
 
 
 class ReviewTermsPage(TermsPage, NavScroller):
@@ -124,6 +124,10 @@ class DeviceInfoLayoutMici(Widget):
     self._serial_number_text_label.render()
 
 
+def _drive_toggle_path() -> Path:
+  return Path(Paths.comma_home()) / "starpilot" / "cache" / "use_drive" if PC else Path("/cache/use_drive")
+
+
 def _konik_toggle_path() -> Path:
   return Path(Paths.comma_home()) / "starpilot" / "cache" / "use_konik" if PC else Path("/cache/use_konik")
 
@@ -131,6 +135,7 @@ def _konik_toggle_path() -> Path:
 class ConnectServerBigButton(BigButton):
   _COMMA_OPTION = "comma connect"
   _KONIK_OPTION = "konik connect"
+  _DRIVE_OPTION = "drive connect"
 
   def __init__(self):
     self._params = Params()
@@ -141,22 +146,32 @@ class ConnectServerBigButton(BigButton):
     return 52
 
   def _selected_option(self) -> str:
-    return self._KONIK_OPTION if self._params.get_bool("UseKonikServer") else self._COMMA_OPTION
+    if self._params.get_bool("UseDriveServer") or self._params.get("ConnectServer", encoding="utf-8") == "drive":
+      return self._DRIVE_OPTION
+    elif self._params.get_bool("UseKonikServer") or self._params.get("ConnectServer", encoding="utf-8") == "konik":
+      return self._KONIK_OPTION
+    return self._COMMA_OPTION
 
   def _apply_selection(self, selection: str):
-    use_konik = selection == self._KONIK_OPTION
-    prepare_konik_server_switch(use_konik, self._params)
+    prepare_server_switch(selection, self._params)
 
-    toggle_path = _konik_toggle_path()
-    toggle_path.parent.mkdir(parents=True, exist_ok=True)
-    if use_konik:
-      toggle_path.touch(exist_ok=True)
+    drive_toggle_path = _drive_toggle_path()
+    konik_toggle_path = _konik_toggle_path()
+    drive_toggle_path.parent.mkdir(parents=True, exist_ok=True)
+    konik_toggle_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if selection == self._DRIVE_OPTION:
+      drive_toggle_path.touch(exist_ok=True)
+      if konik_toggle_path.exists():
+        konik_toggle_path.unlink()
+    elif selection == self._KONIK_OPTION:
+      konik_toggle_path.touch(exist_ok=True)
+      if drive_toggle_path.exists():
+        drive_toggle_path.unlink()
     else:
-      try:
-        toggle_path.unlink(missing_ok=True)
-      except TypeError:
-        if toggle_path.exists():
-          toggle_path.unlink()
+      for p in (drive_toggle_path, konik_toggle_path):
+        if p.exists():
+          p.unlink()
 
     ui_state.params.put_bool("DoReboot", True)
 
@@ -172,7 +187,7 @@ class ConnectServerBigButton(BigButton):
 
       gui_app.push_widget(BigConfirmationDialog("slide to\nreboot", self._reboot_icon, lambda: self._apply_selection(selection)))
 
-    dialog = BigMultiOptionDialog(options=[self._COMMA_OPTION, self._KONIK_OPTION], default=self._selected_option(), right_btn_callback=on_confirm)
+    dialog = BigMultiOptionDialog(options=[self._COMMA_OPTION, self._KONIK_OPTION, self._DRIVE_OPTION], default=self._selected_option(), right_btn_callback=on_confirm)
     dialog_holder["dialog"] = dialog
     gui_app.push_widget(dialog)
 

@@ -34,12 +34,24 @@ def _remove_param_from_live_and_cache(key, params, params_cache=None):
   params_cache.remove(key)
 
 
-def prepare_konik_server_switch(use_konik, params, params_cache=None):
+def prepare_server_switch(selection: str, params: Params, params_cache=None):
+  use_drive = selection in ("drive connect", "drive")
+  use_konik = selection in ("konik connect", "konik")
+  params.put_bool("UseDriveServer", use_drive)
   params.put_bool("UseKonikServer", use_konik)
-  if use_konik:
+  if use_drive:
+    params.put("ConnectServer", "drive")
+    _remove_param_from_live_and_cache("KonikDongleId", params, params_cache)
+  elif use_konik:
+    params.put("ConnectServer", "konik")
     _remove_param_from_live_and_cache("KonikDongleId", params, params_cache)
   else:
+    params.put("ConnectServer", "comma")
     _remove_param_from_live_and_cache("DongleId", params, params_cache)
+
+
+def prepare_konik_server_switch(use_konik, params, params_cache=None):
+  prepare_server_switch("konik" if use_konik else "comma", params, params_cache)
 
 
 def _ensure_stock_dongle_id(params):

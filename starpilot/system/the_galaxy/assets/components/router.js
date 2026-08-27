@@ -28,6 +28,7 @@ import { VASMAnnotations } from "/assets/components/tools/v_asm.js"
 import { PipSideCamera } from "/assets/components/tools/pip_sidecam.js"
 import { FuelEfficiency } from "/assets/components/tools/fuel_efficiency.js"
 import { DTCScanner } from "/assets/components/tools/dtc_scanner.js"
+import { CANSniffer } from "/assets/components/tools/can_sniffer.js"
 import { UpdateManager } from "/assets/components/tools/update_manager.js"
 import { startSentryNotifications } from "/assets/components/sentry_notifications.js"
 
@@ -94,6 +95,7 @@ function Root() {
     createRoute("vehicle_features", "/vehicle_features", VehicleFeatures),
     createRoute("fuel_efficiency", "/fuel_efficiency", FuelEfficiency),
     createRoute("dtc_scanner", "/dtc_scanner", DTCScanner),
+    createRoute("can_sniffer", "/can_sniffer", CANSniffer),
     createRoute("v_asm", "/manage_v_asm", VASMAnnotations),
     createRoute("pip_sidecam", "/manage_pip_sidecam", PipSideCamera),
   ]

@@ -6789,6 +6789,42 @@ def setup(app):
     res = scanner.lookup_code(code)
     return jsonify(res), 200
 
+  @app.route("/api/can_sniffer/status", methods=["GET"])
+  def can_sniffer_status():
+    from openpilot.starpilot.system.can_sniffer import get_can_sniffer
+    return jsonify(get_can_sniffer().get_status()), 200
+
+  @app.route("/api/can_sniffer/start", methods=["POST"])
+  def can_sniffer_start():
+    from openpilot.starpilot.system.can_sniffer import get_can_sniffer
+    data = request.get_json() or {}
+    label = data.get("label", "Tastendruck")
+    return jsonify(get_can_sniffer().start_recording(label)), 200
+
+  @app.route("/api/can_sniffer/stop", methods=["POST"])
+  def can_sniffer_stop():
+    from openpilot.starpilot.system.can_sniffer import get_can_sniffer
+    return jsonify(get_can_sniffer().stop_recording()), 200
+
+  @app.route("/api/can_sniffer/recordings", methods=["GET"])
+  def can_sniffer_recordings():
+    from openpilot.starpilot.system.can_sniffer import get_can_sniffer
+    return jsonify(get_can_sniffer().list_recordings()), 200
+
+  @app.route("/api/can_sniffer/recording/<path:rec_id>", methods=["GET"])
+  def can_sniffer_get_recording(rec_id):
+    from openpilot.starpilot.system.can_sniffer import get_can_sniffer
+    rec = get_can_sniffer().get_recording(rec_id)
+    if rec is None:
+      return jsonify({"error": "not found"}), 404
+    return jsonify(rec), 200
+
+  @app.route("/api/can_sniffer/recording/<path:rec_id>", methods=["DELETE"])
+  def can_sniffer_delete_recording(rec_id):
+    from openpilot.starpilot.system.can_sniffer import get_can_sniffer
+    success = get_can_sniffer().delete_recording(rec_id)
+    return jsonify({"success": success}), 200
+
   @app.route("/api/testing_grounds", methods=["GET"])
   def get_testing_grounds():
     state = _get_testing_grounds_state()

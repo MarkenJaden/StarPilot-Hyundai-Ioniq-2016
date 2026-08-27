@@ -33,6 +33,7 @@ const MENU_ITEMS = {
     { name: "Vehicle Features", link: "/vehicle_features", icon: "bi-car-front" },
     { name: "Fuel & Hybrid Analytics", link: "/fuel_efficiency", icon: "bi-fuel-pump" },
     { name: "OBD-II Diagnose", link: "/dtc_scanner", icon: "bi-wrench-adjustable" },
+    { name: "CAN Tasten-Recorder", link: "/can_sniffer", icon: "bi-disc" },
   ],
 };
 

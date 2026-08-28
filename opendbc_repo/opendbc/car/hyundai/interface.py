@@ -365,7 +365,10 @@ class CarInterface(CarInterfaceBase):
         addr, bus = 0x730, CanBus(CP).ECAN
 
       skip_disable_ecu = False
-      if CP.carFingerprint in CANFD_ANGLE_LONGITUDINAL_CAR and egmp_in_ready_state(can_recv, bus):
+      if CP.carFingerprint in RADAR_LIVE_LONGITUDINAL_CAR or not (CP.flags & (HyundaiFlags.CANFD | HyundaiFlags.CAN_CANFD_BLENDED)):
+        ecu_log("=== ECU DISABLE SKIPPED - RADAR_LIVE / classic CAN platform ===")
+        skip_disable_ecu = True
+      elif CP.carFingerprint in CANFD_ANGLE_LONGITUDINAL_CAR and egmp_in_ready_state(can_recv, bus):
         apply_ecu_disable_failure_fallback(CP, params)
         ecu_log(f"=== ECU DISABLE SKIPPED - READY detected, safetyParam stripped to {CP.safetyConfigs[-1].safetyParam}, lateral-only mode ===")
         skip_disable_ecu = True

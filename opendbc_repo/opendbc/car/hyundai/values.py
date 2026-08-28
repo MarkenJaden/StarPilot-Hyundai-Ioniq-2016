@@ -331,7 +331,7 @@ class CAR(Platforms):
   HYUNDAI_IONIQ = HyundaiPlatformConfig(
     [HyundaiCarDocs("Hyundai Ioniq Hybrid 2017-19", car_parts=CarParts.common([CarHarness.hyundai_c]))],
     CarSpecs(mass=1490, wheelbase=2.7, steerRatio=13.73, tireStiffnessFactor=0.385),
-    flags=HyundaiFlags.HYBRID | HyundaiFlags.MIN_STEER_32_MPH | HyundaiFlags.MANDO_RADAR | HyundaiFlags.UNSUPPORTED_LONGITUDINAL,
+    flags=HyundaiFlags.HYBRID | HyundaiFlags.MIN_STEER_32_MPH | HyundaiFlags.MANDO_RADAR,
   )
   HYUNDAI_IONIQ_HEV_2022 = HyundaiPlatformConfig(
     [HyundaiCarDocs("Hyundai Ioniq Hybrid 2020-22", car_parts=CarParts.common([CarHarness.hyundai_h]))],
@@ -351,7 +351,7 @@ class CAR(Platforms):
   HYUNDAI_IONIQ_PHEV_2019 = HyundaiPlatformConfig(
     [HyundaiCarDocs("Hyundai Ioniq Plug-in Hybrid 2019", car_parts=CarParts.common([CarHarness.hyundai_c]))],
     CarSpecs(mass=1490, wheelbase=2.7, steerRatio=13.73, tireStiffnessFactor=0.385),
-    flags=HyundaiFlags.HYBRID | HyundaiFlags.MIN_STEER_32_MPH | HyundaiFlags.UNSUPPORTED_LONGITUDINAL,
+    flags=HyundaiFlags.HYBRID | HyundaiFlags.MIN_STEER_32_MPH,
   )
   HYUNDAI_IONIQ_PHEV = HyundaiPlatformConfig(
     [HyundaiCarDocs("Hyundai Ioniq Plug-in Hybrid 2020-22", "All", car_parts=CarParts.common([CarHarness.hyundai_h]))],

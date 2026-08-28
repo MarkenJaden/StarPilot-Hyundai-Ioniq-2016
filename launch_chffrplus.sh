@@ -115,9 +115,9 @@ function launch {
   sp_launch_timing "overlay_check_done"
 
   # handle pythonpath
-  ln -sfn $(pwd) /data/pythonpath
+  ln -sfn "$DIR" /data/pythonpath
   export BASEDIR="$DIR"
-  export PYTHONPATH="$DIR/starpilot/third_party:$PWD"
+  export PYTHONPATH="$DIR/starpilot/third_party:$DIR"
   sp_launch_timing "pythonpath_done"
 
   # hardware specific init
@@ -131,7 +131,7 @@ function launch {
   sp_launch_timing "capture_launch_log_done"
 
   # start manager
-  cd system/manager
+  cd "$DIR/system/manager"
 
   sp_launch_timing "launch_param_migrations_start"
   if ! python3 ./launch_param_migrations.py; then

@@ -90,10 +90,6 @@ def select_redneck_target_speed(v_cruise_kph: float, speed_cluster_ms: float,
         lead_rel_speed_ms,
       ))
 
-    if proactive_coast and target_speed_ms > speed_cluster_ms and \
-        decrease_target_speed_ms >= speed_cluster_ms - LEAD_RECOVERY_HOLD_BUFFER_MS:
-      return speed_cluster_ms
-
     if decrease_target_speed_ms < target_speed_ms:
       return decrease_target_speed_ms
 

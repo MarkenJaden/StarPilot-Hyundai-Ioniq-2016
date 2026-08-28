@@ -296,6 +296,22 @@ def get_car(can_recv: CanRecvCallable, can_send: CanSendCallable, set_obd_multip
         "cached_candidate": cached_candidate,
       })
       candidate = gm_fallback_candidate
+    elif stored_candidate in interfaces and stored_candidate != "MOCK":
+      carlog.error({
+        "event": "using stored candidate fallback after empty/ambiguous live fingerprint",
+        "candidate": stored_candidate,
+        "stored_candidate": stored_candidate,
+        "cached_candidate": cached_candidate,
+      })
+      candidate = stored_candidate
+    elif cached_candidate in interfaces and cached_candidate != "MOCK":
+      carlog.error({
+        "event": "using cached candidate fallback after empty/ambiguous live fingerprint",
+        "candidate": cached_candidate,
+        "stored_candidate": stored_candidate,
+        "cached_candidate": cached_candidate,
+      })
+      candidate = cached_candidate
 
   if candidate is None or starpilot_toggles.force_fingerprint:
     if starpilot_toggles.force_fingerprint:

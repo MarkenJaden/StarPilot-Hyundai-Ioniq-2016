@@ -710,54 +710,64 @@ class CarState(CarStateBase):
 
     msgs = [
       ("MDPS12", 50),
-      ("MDPS11", 100),
       ("TCS11", 100),
-      ("TCS13", 50),
-      ("TCS15", 10),
       ("CLU11", 50),
-      ("CLU14", 10),
-      ("CLU15", 5),
       ("ESP12", 100),
-      ("CGW1", 10),
-      ("CGW2", 5),
-      ("CGW4", 5),
       ("WHL_SPD11", 50),
       ("SAS11", 100),
-      ("EMS11", 0),
-      ("EMS12", 100),
-      ("EMS16", 100),
-      ("BCM_PO_11", 0),
+      ("MDPS11", 0),
+      ("TCS13", 0),
+      ("TCS15", 0),
+      ("CLU11", 0),
       ("CLU13", 0),
+      ("CLU14", 0),
+      ("CLU15", 0),
+      ("CGW1", 0),
+      ("CGW2", 0),
+      ("CGW4", 0),
+      ("EMS11", 0),
+      ("EMS12", 0),
+      ("EMS16", 0),
+      ("BCM_PO_11", 0),
     ]
+    # Remove duplicates while preserving order
+    seen_addrs = set()
+    unique_msgs = []
+    for name, freq in msgs:
+      if name not in seen_addrs:
+        seen_addrs.add(name)
+        unique_msgs.append((name, freq))
+    msgs = unique_msgs
+
     if self.CP.flags & (HyundaiFlags.HYBRID | HyundaiFlags.EV):
       msgs += [
-        ("E_EMS11", 50),
-        ("ELECT_GEAR", 20),
+        ("E_EMS11", 0),
+        ("ELECT_GEAR", 0),
       ]
     elif self.CP.flags & HyundaiFlags.FCEV:
       msgs += [
-        ("FCEV_ACCELERATOR", 100),
-        ("EMS20", 100),
+        ("FCEV_ACCELERATOR", 0),
+        ("EMS20", 0),
       ]
     elif self.CP.flags & HyundaiFlags.TCU_GEARS:
       msgs += [
-        ("TCU12", 100),
+        ("TCU12", 0),
       ]
     else:
       msgs += [
-        ("LVR12", 100),
+        ("LVR12", 0),
       ]
 
     if self.CP.flags & HyundaiFlags.USE_FCA:
-      msgs.append(("FCA11", 50))
+      msgs.append(("FCA11", 0))
     elif not (self.CP.flags & HyundaiFlags.NON_SCC):
       msgs += [
-        ("SCC11", 50),
-        ("SCC12", 50),
+        ("SCC11", 0),
+        ("SCC12", 0),
       ]
 
     if self.CP.enableBsm:
-      msgs.append(("LCA11", 20))
+      msgs.append(("LCA11", 0))
 
     if CP.carFingerprint in CLASSIC_MEDIA_BUTTON_CARS:
       # Steering-wheel media switches are event-driven on the refresh Elantra.

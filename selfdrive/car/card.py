@@ -123,6 +123,7 @@ class Car:
 
       self.CI = get_car(*self.can_callbacks, obd_callback(self.params), alpha_long_allowed, is_release, self.params, num_pandas, cached_params,
                         get_starpilot_toggles(read_persisted_force_params=True))
+      self.CI.init(self.CI.CP, *self.can_callbacks)
       self.RI = interfaces[self.CI.CP.carFingerprint].RadarInterface(self.CI.CP)
       self.CP = self.CI.CP
 

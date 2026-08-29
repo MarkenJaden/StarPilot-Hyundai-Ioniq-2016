@@ -173,7 +173,7 @@ class CANParser:
 
     # Legacy compatibility: many car ports use freq=0 for optional/asynchronous messages.
     # In this parser, those should not participate in alive timeout validity checks.
-    optional_msg = freq is not None and (math.isnan(freq) or freq <= 0)
+    optional_msg = (freq is None) or math.isnan(freq) or (freq <= 0)
     state = MessageState(
       address=msg.address,
       name=msg.name,
